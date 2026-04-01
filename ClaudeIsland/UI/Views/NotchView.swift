@@ -83,11 +83,16 @@ struct NotchView: View {
         }
     }
 
-    /// The highest-priority session for scrolling text display
+    /// The highest-priority session: urgent states first, then most recently active
     private var highestPrioritySession: SessionState? {
         sessionMonitor.instances
             .filter { $0.phase != .ended }
-            .max { animationPriority($0.phase.animationState) < animationPriority($1.phase.animationState) }
+            .max { a, b in
+                let pa = animationPriority(a.phase.animationState)
+                let pb = animationPriority(b.phase.animationState)
+                if pa != pb { return pa < pb }
+                return a.lastActivity < b.lastActivity
+            }
     }
 
     /// Split text into project name and status for separate styling
@@ -540,15 +545,18 @@ struct CollapsedNotchContent: View {
         sessions.filter { $0.phase != .ended }.count
     }
 
+    @State private var pulsePhase: Bool = false
+
     var body: some View {
         HStack(spacing: 6) {
-            // Left: pixel character
+            // Left: pixel character with gentle bob
             PixelCharacterView(state: mostUrgentState)
                 .scaleEffect(0.28)
                 .frame(width: 14, height: 14)
+                .offset(y: pulsePhase ? -1 : 1)
                 .matchedGeometryEffect(id: "crab", in: activityNamespace, isSource: true)
 
-            // Center: project name (white) + status (colored) — pixel font style
+            // Center: project name (white) + status (colored)
             if let parts = activityTextParts {
                 HStack(spacing: 3) {
                     Text(parts.project)
@@ -557,25 +565,25 @@ struct CollapsedNotchContent: View {
                     Text(parts.status)
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
                         .foregroundStyle(statusGradient)
+                        .opacity(pulsePhase ? 1.0 : 0.6)
                 }
                 .lineLimit(1)
                 .fixedSize()
             }
 
-            // Right: session count badge
+            // Right: session count
             if activeSessionCount > 0 {
-                ZStack {
-                    Circle()
-                        .fill(badgeColor)
-                        .frame(width: 16, height: 16)
-                    Text("\(activeSessionCount)")
-                        .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                }
-                .frame(width: 16, height: 16)
+                Text("×\(activeSessionCount)")
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .foregroundColor(badgeColor)
             }
         }
         .padding(.horizontal, 6)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                pulsePhase = true
+            }
+        }
     }
 
     /// Status text gradient based on state
