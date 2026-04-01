@@ -7,20 +7,35 @@
 
 import Combine
 import Foundation
+import SwiftUI
 
-struct BuddyInfo: Sendable {
-    let name: String
-    let personality: String
-    let species: BuddySpecies
-    let hatchedAt: Date?
+// MARK: - Color hex extension
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let r, g, b: Double
+        switch hex.count {
+        case 6:
+            r = Double((int >> 16) & 0xFF) / 255.0
+            g = Double((int >> 8) & 0xFF) / 255.0
+            b = Double(int & 0xFF) / 255.0
+        default:
+            r = 1; g = 1; b = 1
+        }
+        self.init(red: r, green: g, blue: b)
+    }
 }
+
+// MARK: - Buddy Species
 
 enum BuddySpecies: String, CaseIterable, Sendable {
     case duck, goose, cat, rabbit, owl, penguin, turtle, snail
     case dragon, octopus, axolotl, ghost, robot, blob, cactus, mushroom, chonk, capybara
     case unknown
 
-    /// Detect species from personality text
     static func detect(from personality: String) -> BuddySpecies {
         let lower = personality.lowercased()
         for species in BuddySpecies.allCases where species != .unknown {
@@ -31,7 +46,6 @@ enum BuddySpecies: String, CaseIterable, Sendable {
         return .unknown
     }
 
-    /// Emoji for display
     var emoji: String {
         switch self {
         case .duck: return "🦆"
@@ -56,6 +70,17 @@ enum BuddySpecies: String, CaseIterable, Sendable {
         }
     }
 }
+
+// MARK: - Buddy Info
+
+struct BuddyInfo: Sendable {
+    let name: String
+    let personality: String
+    let species: BuddySpecies
+    let hatchedAt: Date?
+}
+
+// MARK: - Buddy Reader
 
 class BuddyReader: ObservableObject {
     static let shared = BuddyReader()

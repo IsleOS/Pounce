@@ -17,41 +17,118 @@ struct ClaudeInstancesView: View {
     @State private var collapsedGroups: Set<String> = []
     /// Whether to show grouped by project or flat list (default: flat)
     @AppStorage("showGroupedSessions") private var showGrouped: Bool = false
+    @ObservedObject private var buddyReader = BuddyReader.shared
+    @State private var showBuddyCard: Bool = false
 
     var body: some View {
         if sessionMonitor.instances.isEmpty {
             emptyState
         } else {
-            VStack(spacing: 0) {
-                // Top bar: session count left, gear right
-                HStack {
-                    Text("\(sessionMonitor.instances.count) sessions")
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.25))
-                    Spacer()
+            ZStack(alignment: .bottomTrailing) {
+                VStack(spacing: 0) {
+                    // Top bar: session count left, gear right
+                    HStack {
+                        Text("\(sessionMonitor.instances.count) sessions")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.25))
+                        Spacer()
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                viewModel.toggleMenu()
+                            }
+                        } label: {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.35))
+                                .frame(width: 24, height: 24)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.top, 2)
+
+                    if showBuddyCard, let buddy = buddyReader.buddy {
+                        buddyCardView(buddy)
+                    } else if showGrouped {
+                        groupedList
+                    } else {
+                        flatList
+                    }
+                }
+
+                // Buddy floating button — bottom right
+                if let buddy = buddyReader.buddy {
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            viewModel.toggleMenu()
+                            showBuddyCard.toggle()
                         }
                     } label: {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.35))
-                            .frame(width: 24, height: 24)
-                            .contentShape(Rectangle())
+                        Text(buddy.species.emoji)
+                            .font(.system(size: 24))
+                            .frame(width: 36, height: 36)
+                            .background(
+                                Circle()
+                                    .fill(Color.white.opacity(0.08))
+                                    .shadow(color: .white.opacity(0.1), radius: 8)
+                            )
                     }
                     .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 10)
-                .padding(.top, 2)
-
-                if showGrouped {
-                    groupedList
-                } else {
-                    flatList
+                    .padding(.trailing, 8)
+                    .padding(.bottom, 4)
                 }
             }
         }
+    }
+
+    // MARK: - Buddy Card
+
+    @ViewBuilder
+    private func buddyCardView(_ buddy: BuddyInfo) -> some View {
+        VStack(spacing: 12) {
+            // Big emoji with bounce
+            Text(buddy.species.emoji)
+                .font(.system(size: 48))
+
+            // Name
+            Text(buddy.name)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white)
+
+            // Species
+            Text(buddy.species.rawValue.capitalized)
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.5))
+
+            // Personality — the best part
+            Text("\"" + buddy.personality + "\"")
+                .font(.system(size: 10))
+                .foregroundColor(.white.opacity(0.5))
+                .italic()
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+
+            // Hint
+            Text("Type /buddy in Claude Code to interact")
+                .font(.system(size: 8))
+                .foregroundColor(.white.opacity(0.2))
+
+            // Back button
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    showBuddyCard = false
+                }
+            } label: {
+                Text("Back")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(Color.white.opacity(0.08)))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 12)
     }
 
     // MARK: - Empty State

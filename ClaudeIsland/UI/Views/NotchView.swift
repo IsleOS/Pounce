@@ -564,18 +564,12 @@ struct CollapsedNotchContent: View {
                     .matchedGeometryEffect(id: "crab", in: activityNamespace, isSource: true)
             }
 
-            // Center: buddy name or project name + status
+            // Center: project name + status (keep project name, don't replace)
             if let parts = activityTextParts {
                 HStack(spacing: 3) {
-                    if let buddy = buddyReader.buddy {
-                        Text(buddy.name)
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.8))
-                    } else {
-                        Text(parts.project)
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
+                    Text(parts.project)
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.8))
                     Text(parts.status)
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
                         .foregroundStyle(statusGradient)
