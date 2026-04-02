@@ -145,6 +145,12 @@ CodeIsland auto-detects your terminal from the process tree:
 
 **Download** the latest `.dmg` from [Releases](https://github.com/xmqywx/CodeIsland/releases), open it, drag to Applications.
 
+> **macOS Gatekeeper warning:** If you see "Code Island is damaged and can't be opened", run this in Terminal:
+> ```bash
+> xattr -cr /Applications/Code\ Island.app
+> ```
+> This removes the quarantine flag from the unsigned app.
+
 ### Build from Source
 
 ```bash

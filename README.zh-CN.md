@@ -145,6 +145,12 @@ CodeIsland 从进程树中自动检测你的终端：
 
 从 [Releases](https://github.com/xmqywx/CodeIsland/releases) 下载最新 `.dmg`，打开后拖到应用程序文件夹。
 
+> **macOS 门禁提示：** 如果看到"Code Island 已损坏，无法打开"，在终端中运行：
+> ```bash
+> xattr -cr /Applications/Code\ Island.app
+> ```
+> 这会移除未签名应用的隔离标记。
+
 ### 从源码构建
 
 ```bash
