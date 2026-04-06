@@ -85,6 +85,11 @@ enum L10n {
     static var goToTerminal: String { tr("Go to Terminal", "前往终端") }
     static var terminal: String { tr("Terminal", "终端") }
 
+    // MARK: - Session state
+
+    static var ended: String { tr("Ended", "已结束") }
+    static var clearEnded: String { tr("Clear Ended", "清除已结束") }
+
     // MARK: - Sound settings
 
     static var soundSettings: String { tr("Sound Settings", "声音设置") }

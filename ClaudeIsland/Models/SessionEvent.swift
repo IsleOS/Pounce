@@ -70,6 +70,9 @@ enum SessionEvent: Sendable {
     /// Session has ended
     case sessionEnded(sessionId: String)
 
+    /// Remove all ended sessions from state
+    case clearEndedSessions
+
     /// Request to load initial history from file
     case loadHistory(sessionId: String, cwd: String)
 
@@ -215,6 +218,8 @@ extension SessionEvent: CustomStringConvertible {
             return "subagentStopped(session: \(sessionId.prefix(8)), task: \(taskToolId.prefix(12)))"
         case .agentFileUpdated(let sessionId, let taskToolId, let tools):
             return "agentFileUpdated(session: \(sessionId.prefix(8)), task: \(taskToolId.prefix(12)), tools: \(tools.count))"
+        case .clearEndedSessions:
+            return "clearEndedSessions"
         }
     }
 }

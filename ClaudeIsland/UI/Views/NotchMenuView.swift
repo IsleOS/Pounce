@@ -139,6 +139,28 @@ struct NotchMenuView: View {
                     }
                     .padding(.horizontal, 4)
 
+                    // Clear ended sessions
+                    Button {
+                        Task { await SessionStore.shared.process(.clearEndedSessions) }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 9))
+                                .foregroundColor(.white.opacity(0.5))
+                                .frame(width: 12)
+                            Text(L10n.clearEnded)
+                                .font(.system(size: 10))
+                                .foregroundColor(.white.opacity(0.7))
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.04)))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 4)
+
                     AccessibilityRow(isEnabled: AXIsProcessTrusted())
 
                     // Star & Feedback

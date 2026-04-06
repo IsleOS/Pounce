@@ -281,15 +281,7 @@ struct ClaudeInstancesView: View {
     /// Secondary sort: by last user message date (stable - doesn't change when agent responds)
     /// Note: approval requests stay in their date-based position to avoid layout shift
     private var sortedInstances: [SessionState] {
-        sessionMonitor.instances
-        .filter { session in
-            // Filter out short-lived ended sessions (< 30s, likely from rate limit checks)
-            if session.phase == .ended {
-                let duration = Date().timeIntervalSince(session.createdAt)
-                return duration > 30
-            }
-            return true
-        }
+        SessionFilter.filterForDisplay(sessionMonitor.instances)
         .sorted { a, b in
             let priorityA = phasePriority(a.phase)
             let priorityB = phasePriority(b.phase)
@@ -594,6 +586,9 @@ struct InstanceRow: View {
         }
     }
 
+    /// Whether this session has ended
+    private var isEnded: Bool { session.phase == .ended }
+
     private var iconScale: CGFloat { isActive ? 0.45 : 0.35 }
     private var iconSize: CGFloat { isActive ? 28 : 22 }
     private var titleFontSize: CGFloat { isActive ? 13 : 11 }
@@ -657,22 +652,34 @@ struct InstanceRow: View {
                                 Capsule().fill(terminalTagColor.opacity(0.12))
                             )
 
+                        // Ended tag
+                        if isEnded {
+                            Text(L10n.ended)
+                                .font(.system(size: 8, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.4))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(Capsule().fill(Color.white.opacity(0.08)))
+                        }
+
                         // Duration — colored when active
                         Text(durationText)
                             .font(.system(size: 10, weight: isActive ? .medium : .regular))
                             .foregroundColor(isActive ? accentColor.opacity(0.7) : .white.opacity(0.3))
 
-                        // Terminal jump button — green tinted
-                        Image(systemName: "terminal")
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(red: 0.29, green: 0.87, blue: 0.5).opacity(0.7))
-                            .frame(width: 20, height: 20)
-                            .background(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color(red: 0.29, green: 0.87, blue: 0.5).opacity(0.1))
-                            )
-                            .contentShape(Rectangle())
-                            .onTapGesture { onFocus() }
+                        // Terminal jump button — hidden for ended sessions
+                        if !isEnded {
+                            Image(systemName: "terminal")
+                                .font(.system(size: 10))
+                                .foregroundColor(Color(red: 0.29, green: 0.87, blue: 0.5).opacity(0.7))
+                                .frame(width: 20, height: 20)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color(red: 0.29, green: 0.87, blue: 0.5).opacity(0.1))
+                                )
+                                .contentShape(Rectangle())
+                                .onTapGesture { onFocus() }
+                        }
 
                         // Delete button (ended/idle sessions)
                         if !isActive {
@@ -796,6 +803,7 @@ struct InstanceRow: View {
             }
         }
         .onHover { isHovered = $0 }
+        .opacity(isEnded ? 0.4 : 1.0)
     }
 
     // MARK: - AskUserQuestion Response

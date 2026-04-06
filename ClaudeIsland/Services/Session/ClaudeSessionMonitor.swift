@@ -68,10 +68,17 @@ class ClaudeSessionMonitor: ObservableObject {
                 }
             }
         )
+        Task { await SessionStore.shared.startZombieScan() }
     }
 
     func stopMonitoring() {
         HookSocketServer.shared.stop()
+        Task { await SessionStore.shared.stopZombieScan() }
+    }
+
+    /// Remove all ended sessions from the store
+    func clearEndedSessions() {
+        Task { await SessionStore.shared.process(.clearEndedSessions) }
     }
 
     // MARK: - Permission Handling
