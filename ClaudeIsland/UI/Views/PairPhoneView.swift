@@ -88,15 +88,15 @@ final class QRPairingWindow {
         w.isMovableByWindowBackground = true
         w.contentView = hostingView
 
-        // Position above notch area (top center of screen)
+        // Center on screen
         if let screen = NSScreen.main {
             let screenFrame = screen.frame
             let x = screenFrame.midX - windowWidth / 2
-            let y = screenFrame.maxY - windowHeight - 60  // Just below the top
+            let y = screenFrame.midY - windowHeight / 2
             w.setFrameOrigin(NSPoint(x: x, y: y))
         }
 
-        w.level = .floating
+        w.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.maximumWindow)))
         w.makeKeyAndOrderFront(nil)
         w.isReleasedWhenClosed = false
 
