@@ -9,9 +9,9 @@
 
 import Foundation
 
-enum DebugLogger {
+enum DebugLogger: Sendable {
     private static let logPath = NSHomeDirectory() + "/.claude/.codeisland.log"
-    private static let dateFormatter: DateFormatter = {
+    private nonisolated(unsafe) static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss.SSS"
         return f
@@ -19,7 +19,7 @@ enum DebugLogger {
     private static let queue = DispatchQueue(label: "com.codeisland.logger", qos: .utility)
 
     /// Log a debug message with category tag
-    static func log(_ category: String, _ message: String) {
+    nonisolated static func log(_ category: String, _ message: String) {
         let timestamp = dateFormatter.string(from: Date())
         let line = "[\(timestamp)] [\(category)] \(message)\n"
 

@@ -924,8 +924,8 @@ actor SessionStore {
             // Clean up HookSocketServer pending permissions and interrupt watchers
             // (mirrors the cleanup that normal Stop/ended hook events perform)
             for sessionId in zombieSessionIds {
-                HookSocketServer.shared.cancelPendingPermissions(sessionId: sessionId)
                 Task { @MainActor in
+                    HookSocketServer.shared.cancelPendingPermissions(sessionId: sessionId)
                     InterruptWatcherManager.shared.stopWatching(sessionId: sessionId)
                 }
             }
