@@ -39,6 +39,11 @@ actor SessionStore {
         sessionsSubject.eraseToAnyPublisher()
     }
 
+    /// Get current sessions snapshot
+    func currentSessions() -> [SessionState] {
+        return Array(sessions.values)
+    }
+
     // MARK: - Initialization
 
     private init() {}

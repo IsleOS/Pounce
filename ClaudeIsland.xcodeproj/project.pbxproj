@@ -7,11 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CL00000100000001AABBCC01 /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = CL00000200000002AABBCC02 /* SocketIO */; };
+		CL00000100000003AABBCC03 /* CodeLightProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = CL00000200000004AABBCC04 /* CodeLightProtocol */; };
+		CL00000100000005AABBCC05 /* CodeLightCrypto in Frameworks */ = {isa = PBXBuildFile; productRef = CL00000200000006AABBCC06 /* CodeLightCrypto */; };
 		FDA49F7D2EE11E3C00F9612E /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = FD33FD722EDF32D7002A6548 /* Markdown */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		FD33FD5D2EDF32D7002A6548 /* Claude Island.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Claude Island.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD33FD5D2EDF32D7002A6548 /* Code Island.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Code Island.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -41,6 +44,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				FDA49F7D2EE11E3C00F9612E /* Markdown in Frameworks */,
+				CL00000100000001AABBCC01 /* SocketIO in Frameworks */,
+				CL00000100000003AABBCC03 /* CodeLightProtocol in Frameworks */,
+				CL00000100000005AABBCC05 /* CodeLightCrypto in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -58,7 +64,7 @@
 		FD33FD5E2EDF32D7002A6548 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FD33FD5D2EDF32D7002A6548 /* Claude Island.app */,
+				FD33FD5D2EDF32D7002A6548 /* Code Island.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -84,9 +90,12 @@
 			name = ClaudeIsland;
 			packageProductDependencies = (
 				FD33FD722EDF32D7002A6548 /* Markdown */,
+				CL00000200000002AABBCC02 /* SocketIO */,
+				CL00000200000004AABBCC04 /* CodeLightProtocol */,
+				CL00000200000006AABBCC06 /* CodeLightCrypto */,
 			);
 			productName = ClaudeIsland;
-			productReference = FD33FD5D2EDF32D7002A6548 /* Claude Island.app */;
+			productReference = FD33FD5D2EDF32D7002A6548 /* Code Island.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -115,6 +124,9 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				FD33FD712EDF32D7002A6548 /* XCRemoteSwiftPackageReference "swift-markdown" */,
+				CL00000300000007AABBCC07 /* XCRemoteSwiftPackageReference "socket" */,
+				CL00000300000008AABBCC08 /* XCLocalSwiftPackageReference "../CodeLight/packages/CodeLightProtocol" */,
+				CL00000300000009AABBCC09 /* XCLocalSwiftPackageReference "../CodeLight/packages/CodeLightCrypto" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FD33FD5E2EDF32D7002A6548 /* Products */;
@@ -275,8 +287,8 @@
 				CODE_SIGN_ENTITLEMENTS = ClaudeIsland/Resources/ClaudeIsland.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 13;
-				DEVELOPMENT_TEAM = 2DKS5U9LV4;
+				CURRENT_PROJECT_VERSION = 10;
+				DEVELOPMENT_TEAM = 4GT6V2DUTF;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -310,8 +322,8 @@
 				CODE_SIGN_ENTITLEMENTS = ClaudeIsland/Resources/ClaudeIsland.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 13;
-				DEVELOPMENT_TEAM = 2DKS5U9LV4;
+				CURRENT_PROJECT_VERSION = 10;
+				DEVELOPMENT_TEAM = 4GT6V2DUTF;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -360,7 +372,26 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		CL00000300000008AABBCC08 /* XCLocalSwiftPackageReference "../CodeLight/packages/CodeLightProtocol" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../CodeLight/packages/CodeLightProtocol;
+		};
+		CL00000300000009AABBCC09 /* XCLocalSwiftPackageReference "../CodeLight/packages/CodeLightCrypto" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../CodeLight/packages/CodeLightCrypto;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
+		CL00000300000007AABBCC07 /* XCRemoteSwiftPackageReference "socket" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/socketio/socket.io-client-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 16.1.1;
+			};
+		};
 		FD33FD712EDF32D7002A6548 /* XCRemoteSwiftPackageReference "swift-markdown" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/swiftlang/swift-markdown";
@@ -372,6 +403,21 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		CL00000200000002AABBCC02 /* SocketIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CL00000300000007AABBCC07 /* XCRemoteSwiftPackageReference "socket" */;
+			productName = SocketIO;
+		};
+		CL00000200000004AABBCC04 /* CodeLightProtocol */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CL00000300000008AABBCC08 /* XCLocalSwiftPackageReference "../CodeLight/packages/CodeLightProtocol" */;
+			productName = CodeLightProtocol;
+		};
+		CL00000200000006AABBCC06 /* CodeLightCrypto */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CL00000300000009AABBCC09 /* XCLocalSwiftPackageReference "../CodeLight/packages/CodeLightCrypto" */;
+			productName = CodeLightCrypto;
+		};
 		FD33FD722EDF32D7002A6548 /* Markdown */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FD33FD712EDF32D7002A6548 /* XCRemoteSwiftPackageReference "swift-markdown" */;

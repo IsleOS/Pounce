@@ -24,26 +24,38 @@ struct NotchMenuView: View {
     @State private var hooksInstalled: Bool = false
     @State private var launchAtLogin: Bool = false
 
+    /// Brand lime accent — used sparingly for selection states and call-to-
+    /// action highlights so the menu reads as "dark with brand pop" rather
+    /// than a full lime card pasted into a black notch.
+    static let brandLime = Color(red: 0xD7/255, green: 0xFE/255, blue: 0x62/255)
+
     // MARK: - Compact Toggle
     private func compactToggle(icon: String, label: String, isOn: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(size: 9))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(.white.opacity(isOn ? 0.85 : 0.5))
                     .frame(width: 12)
                 Text(label)
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 10, weight: isOn ? .semibold : .regular))
+                    .foregroundColor(.white.opacity(isOn ? 0.95 : 0.7))
                     .lineLimit(1)
                 Spacer(minLength: 0)
                 Circle()
-                    .fill(isOn ? TerminalColors.green : Color.white.opacity(0.2))
+                    .fill(isOn ? Self.brandLime : Color.white.opacity(0.2))
                     .frame(width: 5, height: 5)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.04)))
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isOn ? Self.brandLime.opacity(0.08) : Color.white.opacity(0.04))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(isOn ? Self.brandLime.opacity(0.25) : Color.clear, lineWidth: 0.5)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -94,28 +106,22 @@ struct NotchMenuView: View {
             .padding(.top, 8)
             .padding(.bottom, 4)
 
-            // Scrollable settings
+            // Single consolidated settings stack — no Appearance / System
+            // section headers, no tagline footer, no WeChat row. Pickers come
+            // first, then ALL 6 toggles in one 2-col grid, then status rows,
+            // then a compact footer with star/feedback + version.
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 2) {
-                    // Appearance
-                    sectionHeader(L10n.tr("Appearance", "外观"))
+                VStack(spacing: 4) {
                     ScreenPickerRow(screenSelector: screenSelector)
                     SoundPickerRow(soundSelector: soundSelector)
                     LanguageRow()
                     ThresholdPickerRow(threshold: $usageWarningThreshold)
 
-                    // Toggle grid — 2 columns
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 4) {
                         compactToggle(icon: "cat", label: "Pixel Cat", isOn: usePixelCat) { usePixelCat.toggle() }
                         compactToggle(icon: "folder", label: L10n.groupByProject, isOn: showGrouped) { showGrouped.toggle() }
                         compactToggle(icon: "eye.slash", label: L10n.smartSuppression, isOn: smartSuppression) { smartSuppression.toggle() }
                         compactToggle(icon: "rectangle.compress.vertical", label: L10n.autoCollapseOnMouseLeave, isOn: autoCollapseOnMouseLeave) { autoCollapseOnMouseLeave.toggle() }
-                    }
-                    .padding(.horizontal, 4)
-
-                    // System
-                    sectionHeader(L10n.tr("System", "系统"))
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 4) {
                         compactToggle(icon: "power", label: L10n.launchAtLogin, isOn: launchAtLogin) {
                             do {
                                 if launchAtLogin {
@@ -140,19 +146,34 @@ struct NotchMenuView: View {
                     .padding(.horizontal, 4)
 
                     AccessibilityRow(isEnabled: AXIsProcessTrusted())
+                    PairPhoneRow()
+                    PresetSettingsRow()
 
-                    // Star & Feedback
+                    // Footer: star + feedback + version (3 lines compressed
+                    // into 2). Star uses lime accent to align with the brand
+                    // color used by toggle "on" indicators.
                     HStack(spacing: 6) {
                         Button {
                             NSWorkspace.shared.open(URL(string: "https://github.com/xmqywx/CodeIsland")!)
                         } label: {
                             HStack(spacing: 3) {
-                                Image(systemName: "star.fill").font(.system(size: 9)).foregroundColor(.yellow)
-                                Text("Star").font(.system(size: 10, weight: .medium)).foregroundColor(.white.opacity(0.7))
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(Self.brandLime)
+                                Text("Star")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.85))
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 5)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(Color.yellow.opacity(0.08)).overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.yellow.opacity(0.15), lineWidth: 0.5)))
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Self.brandLime.opacity(0.1))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .strokeBorder(Self.brandLime.opacity(0.25), lineWidth: 0.5)
+                                    )
+                            )
                         }
                         .buttonStyle(.plain)
 
@@ -160,8 +181,12 @@ struct NotchMenuView: View {
                             NSWorkspace.shared.open(URL(string: "https://github.com/xmqywx/CodeIsland/issues")!)
                         } label: {
                             HStack(spacing: 3) {
-                                Image(systemName: "bubble.left").font(.system(size: 9)).foregroundColor(.white.opacity(0.4))
-                                Text(L10n.tr("Feedback", "反馈")).font(.system(size: 10, weight: .medium)).foregroundColor(.white.opacity(0.7))
+                                Image(systemName: "bubble.left")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.white.opacity(0.5))
+                                Text(L10n.tr("Feedback", "反馈"))
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.7))
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 5)
@@ -170,28 +195,9 @@ struct NotchMenuView: View {
                         .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 4)
-                    .padding(.top, 6)
-
-                    VersionRow()
-
-                    // WeChat contact
-                    HStack(spacing: 4) {
-                        Text(L10n.tr("WeChat", "微信"))
-                            .font(.system(size: 8))
-                            .foregroundColor(.white.opacity(0.2))
-                        Text("A115939")
-                            .font(.system(size: 8, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.3))
-                            .textSelection(.enabled)
-                    }
                     .padding(.top, 4)
 
-                    Text(L10n.tr("Actively maintained · Your star keeps us going!\nHave ideas? Tap Feedback — we'd love to hear from you!", "持续更新中 · Star 是我们最大的动力！\n有好的想法？点击反馈告诉我们，期待下个版本见！"))
-                        .font(.system(size: 8))
-                        .foregroundColor(.white.opacity(0.15))
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 2)
+                    VersionRow()
                 }
                 .padding(.horizontal, 4)
                 .padding(.bottom, 8)

@@ -108,6 +108,16 @@ The next CodeIsland release ships the **Code Light Sync module** — turning the
 
 A native macOS app that turns your MacBook's notch into a real-time control surface for AI coding agents. Monitor sessions, approve permissions, jump to terminals, and hang out with your Claude Code buddy — all without leaving your flow.
 
+> ### 📱 New: pairs with [Code Light](https://github.com/xmqywx/CodeLight) — your iPhone companion
+> CodeIsland now includes a built-in **sync module** that pairs with the Code Light iPhone app. From your phone you can:
+> - **See** every Claude Code session live, with the iPhone Dynamic Island showing the current phase
+> - **Send** any text message — including all `/slash` commands like `/model`, `/cost`, `/usage`, `/clear`
+> - **Spawn** brand-new cmux workspaces remotely with one tap (Mac-defined launch presets)
+> - **Send** images via camera or photo library (auto-pasted into the cmux pane)
+> - **Pair** multiple iPhones to the same Mac, or one iPhone to many Macs — your phone tracks them all
+>
+> Pairing is **one permanent 6-character code per Mac** (or scan a QR). No accounts, no QR expiry, no re-pair after reboot. See the [Code Light Sync](#code-light-sync-iphone-companion) section below.
+
 ## Features
 
 ### Dynamic Island Notch
@@ -196,6 +206,75 @@ Toggle between flat list and project-grouped view:
 - Collapsible project headers with active count
 - Chevron icons for expand/collapse
 
+### Code Light Sync (iPhone companion)
+
+CodeIsland's **sync module** is the bridge that makes the [Code Light](https://github.com/xmqywx/CodeLight) iPhone companion possible. Open `Pair iPhone` from the notch menu to begin.
+
+#### Pairing
+
+Each Mac is identified on the server by a **permanent 6-character `shortCode`** (lazy-allocated on first connect, never rotates). The pairing window shows both:
+- A QR code (scan with the iPhone's camera)
+- The 6-character code in large monospace (type it in if you don't want to scan)
+
+Both paths converge on the same `POST /v1/pairing/code/redeem` endpoint. The same code can pair as many iPhones as you want — it never expires, doesn't change when you restart CodeIsland, and survives upgrades.
+
+#### Phone → terminal routing
+
+Phone messages have to land in the **exact** Claude Code terminal that the user picked. CodeIsland's `TerminalWriter` does this with zero guessing:
+
+1. `ps -Ax` to find the `claude --session-id <UUID>` process matching the message's session tag
+2. `ps -E -p <pid>` to read `CMUX_WORKSPACE_ID` and `CMUX_SURFACE_ID` env vars
+3. `cmux send --workspace <ws> --surface <surf> -- <text>`
+
+If the live Claude PID was rotated by a `claude --resume`, a `cwd`-scoped fallback picks the highest-PID cmux-hosted Claude in the same directory. If nothing matches, the message is cleanly dropped — no orphan windows ever get hijacked.
+
+For non-cmux terminals (iTerm2, Ghostty, Terminal.app), `TerminalWriter` falls back to AppleScript with the matching workspace title.
+
+#### Slash commands with captured output
+
+`/model`, `/cost`, `/usage`, `/clear`, `/compact` and friends don't write to Claude's JSONL — their output never reaches the file watcher. CodeIsland intercepts these specially:
+
+1. Snapshot the cmux pane via `cmux capture-pane`
+2. Inject the slash command via `cmux send`
+3. Poll the pane every 200 ms until output settles
+4. Diff the snapshots and ship the new lines back to the server as a synthetic `terminal_output` message
+
+The phone sees the response inline in chat as if `/cost` were a normal Claude reply.
+
+#### Remote session launch
+
+The phone can ask CodeIsland to spawn a brand-new cmux workspace running a configured command. CodeIsland defines **launch presets** locally — name + command + icon — and uploads them to the server (using Mac-generated UUIDs as primary keys, so the round-trip works without ID translation).
+
+When the phone calls `POST /v1/sessions/launch {macDeviceId, presetId, projectPath}`, the server emits a `session-launch` socket event scoped to this Mac. CodeIsland's `LaunchService` looks up the preset locally and runs:
+
+```bash
+cmux new-workspace --cwd <projectPath> --command "<preset.command>"
+```
+
+Default presets seeded on first launch:
+- `Claude (skip perms)` → `claude --dangerously-skip-permissions`
+- `Claude + Chrome` → `claude --dangerously-skip-permissions --chrome`
+
+Add, edit, or remove your own presets from the **Launch Presets** menu in the notch.
+
+#### Image attachments
+
+Phone-attached images come down as opaque blob IDs (uploaded by the phone via `POST /v1/blobs`). CodeIsland downloads each blob, focuses the target cmux pane, writes the image to `NSPasteboard` in NSImage / `public.jpeg` / `.tiff` formats, then `System Events keystroke "v" using {command down}` (with a `CGEvent` fallback). Claude sees `[Image #N]` and the trailing text as a single message.
+
+This requires **Accessibility permission** — and because permissions are tracked by the app's signed path, CodeIsland auto-installs a copy of itself to `/Applications/Code Island.app` so the grant survives Debug rebuilds.
+
+#### Project path sync
+
+CodeIsland uploads the unique `cwd` of every active session every 5 minutes. The phone fetches them from `GET /v1/devices/<macDeviceId>/projects` to populate the "Recent Projects" picker in the launch sheet. No manual configuration.
+
+#### Echo loop dedup
+
+Phone sends → server → CodeIsland pastes → Claude writes to JSONL → file watcher sees a "new user message" → would normally re-upload it → phone gets a duplicate. Fixed with a 60 s TTL `(claudeUuid, text)` ring on the Mac: MessageRelay consumes a matching entry before uploading and skips. No server changes, no localId negotiation.
+
+#### Multi-iPhone, multi-server
+
+A Mac can be paired with multiple iPhones simultaneously — they all share the same `shortCode`. From the iPhone side, one phone can be paired with multiple Macs across different backend servers; the phone's `LinkedMacs` list stores `serverUrl` per Mac and switches connections automatically when you tap into a different one.
+
 ## Settings
 
 | Setting | Description |
@@ -207,7 +286,9 @@ Toggle between flat list and project-grouped view:
 | **Language** | Auto (system) / English / 中文 |
 | **Launch at Login** | Start CodeIsland automatically when you log in |
 | **Hooks** | Install/uninstall Claude Code hooks in `~/.claude/settings.json` |
-| **Accessibility** | Grant accessibility permission for terminal window focusing |
+| **Accessibility** | Grant accessibility permission for terminal window focusing + image-paste keystrokes |
+| **Pair iPhone** | Show the QR + 6-character pairing code for the [Code Light](https://github.com/xmqywx/CodeLight) iPhone app |
+| **Launch Presets** | Manage the named cmux launch commands the iPhone can trigger remotely |
 
 ## Terminal Support
 
