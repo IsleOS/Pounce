@@ -19,6 +19,11 @@ class NotchWindowController: NSWindowController {
     /// so it can be torn down independently if the controller is
     /// ever re-attached to a different store instance.
     private var customizationCancellable: AnyCancellable?
+    private var editingCancellable: AnyCancellable?
+
+    /// Active live-edit overlay panel, non-nil only while
+    /// store.isEditing == true.
+    private var liveEditPanel: NotchLiveEditPanel?
 
     init(screen: NSScreen) {
         self.screen = screen
@@ -122,6 +127,45 @@ class NotchWindowController: NSWindowController {
             .sink { [weak self] _ in
                 self?.applyGeometryFromStore()
             }
+
+        // Mirror live edit lifecycle into panel creation / teardown.
+        editingCancellable = store.$isEditing
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] editing in
+                guard let self else { return }
+                if editing {
+                    self.enterLiveEditMode()
+                } else {
+                    self.exitLiveEditMode()
+                }
+            }
+    }
+
+    @MainActor
+    func enterLiveEditMode() {
+        guard liveEditPanel == nil else { return }
+        let activeScreen = window?.screen ?? self.screen
+        let panel = NotchLiveEditPanel(screen: activeScreen)
+
+        let overlay = NotchLiveEditOverlay(onExit: { [weak self] in
+            self?.exitLiveEditMode()
+        })
+        let hosting = NSHostingView(rootView: overlay)
+        hosting.frame = panel.contentView?.bounds ?? .zero
+        hosting.autoresizingMask = [.width, .height]
+        panel.contentView?.addSubview(hosting)
+
+        panel.orderFrontRegardless()
+        panel.makeKey()
+        self.liveEditPanel = panel
+    }
+
+    @MainActor
+    func exitLiveEditMode() {
+        guard let panel = liveEditPanel else { return }
+        panel.orderOut(nil)
+        panel.close()
+        self.liveEditPanel = nil
     }
 
     /// Recompute the panel frame from the current store state +
