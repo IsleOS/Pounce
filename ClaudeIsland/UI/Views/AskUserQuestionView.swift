@@ -213,24 +213,31 @@ struct AskUserQuestionView: View {
         }
     }
 
-    /// Send keystrokes to the frontmost terminal app using System Events.
-    /// Uses `keystroke` which simulates real keyboard input (raw mode),
-    /// unlike `write text` / `input text` which paste and cause echo.
     private func sendOptionToTerminal(index: Int) async {
-        await sendKeystrokesToTerminal("\(index)\n")
+        await sendToTerminal("\(index)")
     }
 
     private func sendTextToTerminal(_ text: String) async {
-        await sendKeystrokesToTerminal("\(text)\n")
+        await sendToTerminal(text)
     }
 
-    private func sendKeystrokesToTerminal(_ keys: String) async {
-        // First, activate the terminal app
+    /// Send text to the terminal. Uses cmux native API for cmux,
+    /// System Events keystroke for other terminals.
+    private func sendToTerminal(_ text: String) async {
         let termApp = session.terminalApp?.lowercased() ?? ""
-        let appName: String
+
+        // cmux: use native input text API (System Events keystroke doesn't work)
         if termApp.contains("cmux") {
-            appName = "cmux"
-        } else if termApp.contains("iterm") {
+            if CmuxTreeParser.isAvailable {
+                let sent = CmuxTreeParser.sendText("\(text)\r", toCwd: session.cwd)
+                DebugLogger.log("AskUser", "Sent to cmux: \(sent)")
+                return
+            }
+        }
+
+        // Other terminals: System Events keystroke (no echo)
+        let appName: String
+        if termApp.contains("iterm") {
             appName = "iTerm2"
         } else if termApp.contains("ghostty") {
             appName = "Ghostty"
@@ -243,25 +250,25 @@ struct AskUserQuestionView: View {
         } else if termApp.contains("warp") {
             appName = "Warp"
         } else {
-            DebugLogger.log("AskUser", "Unknown terminal app: \(termApp), jumping")
+            DebugLogger.log("AskUser", "Unknown terminal: \(termApp), jumping")
             await TerminalJumper.shared.jump(to: session)
             return
         }
 
-        // Use System Events keystroke — simulates real keyboard input
-        let escaped = keys.replacingOccurrences(of: "\\", with: "\\\\")
+        let escaped = text.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
         let script = """
         tell application "\(appName)" to activate
         delay 0.1
         tell application "System Events"
             keystroke "\(escaped)"
+            key code 36
         end tell
         """
         if runAppleScript(script) {
             DebugLogger.log("AskUser", "Sent keystroke to \(appName)")
         } else {
-            DebugLogger.log("AskUser", "keystroke failed for \(appName), jumping")
+            DebugLogger.log("AskUser", "keystroke failed, jumping")
             await TerminalJumper.shared.jump(to: session)
         }
     }
