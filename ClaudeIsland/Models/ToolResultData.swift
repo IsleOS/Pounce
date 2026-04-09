@@ -196,6 +196,7 @@ struct QuestionItem: Equatable, Sendable {
     let question: String
     let header: String?
     let options: [QuestionOption]
+    let multiSelect: Bool
 }
 
 struct QuestionOption: Equatable, Sendable {
