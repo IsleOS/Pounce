@@ -191,10 +191,17 @@ struct AskUserQuestionView: View {
 
     // MARK: - Terminal Sending
 
+    /// Defer the PermissionRequest to the CLI (don't approve via hook socket),
+    /// then send the approval + option selection as terminal keystrokes.
+    /// This ensures Claude Code shows the interactive AskUserQuestion picker.
     private func approveAndSendOption(index: Int) async {
-        sessionMonitor.approvePermission(sessionId: session.sessionId)
-        try? await Task.sleep(nanoseconds: 500_000_000)
-        await sendOptionToTerminal(index: index)
+        // Respond "ask" to hook socket — Python script exits, CLI shows permission prompt
+        deferPermissionToTerminal()
+        // Small delay for the permission prompt to render
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        // Send: approve permission ("y" + Enter) + select option (number + Enter)
+        // Input is buffered — CLI processes "y\r" first, then AskUserQuestion reads the number
+        await sendToTerminal("y\r\(index)")
     }
 
     private func submitCustomText() {
@@ -204,12 +211,21 @@ struct AskUserQuestionView: View {
         let optionCount = context.questions.first?.options.count ?? 0
         DebugLogger.log("AskUser", "Custom text: \(text)")
         Task {
-            sessionMonitor.approvePermission(sessionId: session.sessionId)
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            // Send "Other" option number + custom text + Enter as one sequence
-            // Keyboard flow: type "4" (selects Other) → type custom text → Enter
+            deferPermissionToTerminal()
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            // Send: approve + Other option number + custom text
             let otherIndex = optionCount + 1
-            await sendToTerminal("\(otherIndex)\(text)")
+            await sendToTerminal("y\r\(otherIndex)\(text)")
+        }
+    }
+
+    /// Tell the hook socket to defer to CLI (respond "ask" instead of "allow")
+    private func deferPermissionToTerminal() {
+        if let permission = session.activePermission {
+            HookSocketServer.shared.respondToPermission(
+                toolUseId: permission.toolUseId,
+                decision: "ask"
+            )
         }
     }
 
