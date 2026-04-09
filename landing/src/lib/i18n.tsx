@@ -55,9 +55,9 @@ const translations = {
   // HowItWorks
   "how.tag": { zh: "快速上手", en: "GET STARTED" },
   "how.title": { zh: "三步开始", en: "Three steps to flow" },
-  "how.install.cmd": { zh: "# 下载 DMG 拖到应用程序", en: "# Download DMG, drag to Applications" },
+  "how.install.cmd": { zh: "brew install xmqywx/codeisland/codeisland", en: "brew install xmqywx/codeisland/codeisland" },
   "how.install.title": { zh: "安装", en: "Install" },
-  "how.install.desc": { zh: "从 GitHub Releases 下载 DMG，拖到应用程序文件夹即可。", en: "Download the DMG from GitHub Releases and drag to Applications." },
+  "how.install.desc": { zh: "一行 Homebrew 命令搞定，或从 GitHub Releases 下载 DMG 拖到应用程序。", en: "One Homebrew command, or download the DMG from GitHub Releases." },
   "how.launch.cmd": { zh: "# 自动配置 Claude Code hooks", en: "# Auto-configures Claude Code hooks" },
   "how.launch.title": { zh: "启动", en: "Launch" },
   "how.launch.desc": { zh: "CodeIsland 自动检测你的环境并安装 hooks，无需手动编辑任何配置文件。", en: "CodeIsland detects your setup and installs hooks. No config files to edit." },
