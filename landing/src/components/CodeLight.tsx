@@ -1,4 +1,4 @@
-import { Smartphone, Star, Download } from "lucide-react"
+import { Smartphone, Star, Download, Zap, ShieldCheck, Terminal, Camera, Link, Lock } from "lucide-react"
 import { useI18n } from "../lib/i18n"
 
 const GithubIcon = ({ size = 16 }: { size?: number }) => (
@@ -8,6 +8,8 @@ const GithubIcon = ({ size = 16 }: { size?: number }) => (
 )
 
 const base = import.meta.env.BASE_URL
+
+const featureIcons = [Smartphone, ShieldCheck, Terminal, Zap, Camera, Link, Lock]
 
 export default function CodeLight() {
   const { t } = useI18n()
@@ -20,10 +22,11 @@ export default function CodeLight() {
     { src: `${base}codelight/settings.png`, label: t("codelight.settings") },
   ]
 
-  const features = [
-    t("codelight.f1"), t("codelight.f2"), t("codelight.f3"),
-    t("codelight.f4"), t("codelight.f5"), t("codelight.f6"), t("codelight.f7"),
-  ]
+  const features = [1, 2, 3, 4, 5, 6, 7].map((i) => ({
+    Icon: featureIcons[i - 1],
+    title: t(`codelight.f${i}.title` as any),
+    desc: t(`codelight.f${i}.desc` as any),
+  }))
 
   return (
     <section className="relative z-20 bg-deep py-20 sm:py-32 px-4 sm:px-6 noise overflow-hidden">
@@ -60,7 +63,7 @@ export default function CodeLight() {
         </div>
 
         {/* Screenshot grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mb-12" style={{ animation: 'heroEnter 0.8s ease-out 0.2s both' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mb-16" style={{ animation: 'heroEnter 0.8s ease-out 0.2s both' }}>
           {screenshots.map((s, i) => (
             <div key={i} className="text-center group">
               <div className="rounded-xl overflow-hidden border border-white/[0.06] shadow-lg transition-transform duration-300 group-hover:scale-[1.03]">
@@ -71,13 +74,26 @@ export default function CodeLight() {
           ))}
         </div>
 
-        {/* Feature list */}
-        <div className="glass rounded-2xl p-6 sm:p-8 mb-10" style={{ animation: 'heroEnter 0.8s ease-out 0.3s both' }}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Feature cards grid */}
+        <div style={{ animation: 'heroEnter 0.8s ease-out 0.3s both' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-12">
             {features.map((f, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <span className="text-green text-sm mt-0.5">✓</span>
-                <span className="text-sm text-text-secondary leading-relaxed">{f}</span>
+              <div
+                key={i}
+                className="group relative rounded-2xl p-5 transition-all duration-300 hover:scale-[1.02]"
+                style={{
+                  background: 'rgba(124,58,237,0.04)',
+                  border: '1px solid rgba(124,58,237,0.1)',
+                }}
+              >
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'rgba(124,58,237,0.08)' }} />
+                <div className="relative z-10">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: 'rgba(124,58,237,0.15)' }}>
+                    <f.Icon size={18} className="text-purple-400" />
+                  </div>
+                  <h4 className="text-sm font-bold text-text-primary mb-1">{f.title}</h4>
+                  <p className="text-xs text-text-muted leading-relaxed">{f.desc}</p>
+                </div>
               </div>
             ))}
           </div>

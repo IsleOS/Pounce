@@ -181,22 +181,22 @@ export default function NotchDemo() {
           <h2 className="font-display text-3xl sm:text-4xl sm:text-5xl font-extrabold text-text-primary mt-4">{t("demo.sectionTitle")}</h2>
         </div>
 
-        <div style={{ animation: 'heroEnter 0.8s ease-out 0.1s both' }} className="mx-auto max-w-md">
+        <div style={{ animation: 'heroEnter 0.8s ease-out 0.1s both' }} className="mx-auto max-w-2xl">
           <div className="relative">
             {/* Notch shape */}
-            <div className="bg-black rounded-b-3xl pt-2 pb-4 px-4 border border-white/[0.06] border-t-0 shadow-[0_20px_80px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+            <div className="bg-black rounded-b-3xl pt-3 pb-5 px-5 sm:px-6 border border-white/[0.06] border-t-0 shadow-[0_20px_80px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.03)_inset]">
               {/* Header bar - matches real app */}
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/[0.05]">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[12px]">🐢</span>
-                  <span className="font-mono text-[10px] text-white/50">2 sessions</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px]">🐢</span>
+                  <span className="font-mono text-[11px] text-white/50">{t("demo.activeSessions")}</span>
                 </div>
-                <span className="text-[10px] text-white/20">⚙</span>
+                <span className="text-[11px] text-white/20">⚙</span>
               </div>
 
               {/* Dynamic content */}
               <AnimatePresence mode="wait">
-                <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="min-h-[170px]">
+                <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="min-h-[200px]">
                   <View />
                 </motion.div>
               </AnimatePresence>
