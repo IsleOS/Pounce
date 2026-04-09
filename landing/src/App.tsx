@@ -1,5 +1,6 @@
 import { I18nProvider } from "./lib/i18n"
 import Navbar from "./components/Navbar"
+import SideNav from "./components/SideNav"
 import Hero from "./components/Hero"
 import NotchDemo from "./components/NotchDemo"
 import Features from "./components/Features"
@@ -12,6 +13,7 @@ function App() {
   return (
     <I18nProvider>
       <Navbar />
+      <SideNav />
       <Hero />
       <NotchDemo />
       <Features />

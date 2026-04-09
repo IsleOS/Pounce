@@ -10,6 +10,10 @@ const translations = {
   "nav.github": { zh: "GitHub", en: "GitHub" },
   "nav.download": { zh: "下载", en: "Download" },
 
+  // SideNav
+  "sidenav.codelight": { zh: "Code Light", en: "Code Light" },
+  "sidenav.opensource": { zh: "开源", en: "Open Source" },
+
   // Hero
   "hero.title1": { zh: "MacBook 灵动岛", en: "Dynamic Island" },
   "hero.title2": { zh: "变身 ", en: "for your " },

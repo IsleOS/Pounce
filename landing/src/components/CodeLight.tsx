@@ -29,7 +29,7 @@ export default function CodeLight() {
   }))
 
   return (
-    <section className="relative z-20 bg-deep py-20 sm:py-32 px-4 sm:px-6 noise overflow-hidden">
+    <section id="codelight" className="relative z-20 bg-deep py-20 sm:py-32 px-4 sm:px-6 noise overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(52,211,153,0.06)_0%,transparent_60%)]" />
 
       <div className="max-w-5xl mx-auto relative z-10">
