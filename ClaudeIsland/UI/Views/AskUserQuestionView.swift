@@ -196,9 +196,21 @@ struct AskUserQuestionView: View {
     /// (↑/↓ to navigate, Enter to select), not numbered input.
     /// Default cursor position is on option 1 (index=1).
     private func approveAndSendOption(index: Int) async {
-        // Move down (index-1) times from the default position (option 1)
+        let cwd = session.cwd
         let downPresses = index - 1
-        await sendArrowKeysAndEnter(downCount: downPresses)
+
+        // Send arrow-down (N-1) times
+        for _ in 0..<downPresses {
+            performGhosttyAction("csi:B", cwd: cwd) // CSI B = Arrow Down
+        }
+        // Small delay between arrows and Enter
+        if downPresses > 0 {
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+        // Press Enter
+        performGhosttyAction("write_stable:\\x0d", cwd: cwd) // CR = Enter
+
+        DebugLogger.log("AskUser", "Sent \(downPresses) arrows + Enter via perform action")
     }
 
     private func submitCustomText() {
@@ -208,61 +220,34 @@ struct AskUserQuestionView: View {
         let optionCount = context.questions.first?.options.count ?? 0
         DebugLogger.log("AskUser", "Custom text: \(text)")
         Task {
-            // "Type something" is option (optionCount + 1), navigate there
-            await sendArrowKeysAndEnter(downCount: optionCount)
-            // Wait for the text input prompt to appear
+            let cwd = session.cwd
+            // Navigate to "Type something" option
+            for _ in 0..<optionCount {
+                performGhosttyAction("csi:B", cwd: cwd)
+            }
+            try? await Task.sleep(nanoseconds: 50_000_000)
+            performGhosttyAction("write_stable:\\x0d", cwd: cwd) // Enter
+            // Wait for text input prompt
             try? await Task.sleep(nanoseconds: 500_000_000)
             // Type the custom text + Enter
-            await writeToPty(text + "\n")
+            let escaped = text.replacingOccurrences(of: "\\", with: "\\\\")
+            performGhosttyAction("write_stable:\(escaped)\\x0d", cwd: cwd)
         }
     }
 
-    /// Send arrow-down keys followed by Enter to the pty.
-    /// Arrow Down = ESC [ B (\x1b[B), Enter = \r
-    private func sendArrowKeysAndEnter(downCount: Int) async {
-        var payload = Data()
-        // Arrow Down escape sequence: ESC [ B
-        let arrowDown: [UInt8] = [0x1b, 0x5b, 0x42]
-        for _ in 0..<downCount {
-            payload.append(contentsOf: arrowDown)
-        }
-        // Enter key: carriage return
-        payload.append(0x0d)
-
-        await writeToPtyRaw(payload, label: "\(downCount) arrows + Enter")
-    }
-
-    /// Write raw bytes to the pty device.
-    private func writeToPtyRaw(_ data: Data, label: String) async {
-        guard let tty = session.tty, !tty.isEmpty else {
-            DebugLogger.log("AskUser", "No tty, jumping to terminal")
-            await TerminalJumper.shared.jump(to: session)
-            return
-        }
-
-        let ttyPath = tty.hasPrefix("/dev/") ? tty : "/dev/\(tty)"
-        let fd = open(ttyPath, O_WRONLY | O_NONBLOCK)
-        guard fd >= 0 else {
-            DebugLogger.log("AskUser", "Failed to open \(ttyPath), errno=\(errno)")
-            await TerminalJumper.shared.jump(to: session)
-            return
-        }
-
-        let written = data.withUnsafeBytes { buf in
-            Darwin.write(fd, buf.baseAddress!, buf.count)
-        }
-        close(fd)
-
-        if written > 0 {
-            DebugLogger.log("AskUser", "Sent \(label) to \(ttyPath) (\(written) bytes)")
-        } else {
-            DebugLogger.log("AskUser", "Write failed to \(ttyPath), errno=\(errno)")
-        }
-    }
-
-    /// Write a string to the pty device.
-    private func writeToPty(_ text: String) async {
-        await writeToPtyRaw(Data(text.utf8), label: text.prefix(20).description)
+    /// Execute a Ghostty action on the cmux terminal matching the session's cwd.
+    /// Uses cmux's `perform action` AppleScript command which sends real
+    /// keyboard events through Ghostty's input system (not paste mode).
+    @discardableResult
+    private func performGhosttyAction(_ action: String, cwd: String) -> Bool {
+        let escaped = cwd.replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        tell application "cmux"
+            set targetTerm to (first terminal whose working directory is "\(escaped)")
+            perform action "\(action)" on targetTerm
+        end tell
+        """
+        return runAppleScript(script)
     }
 
     private func runAppleScript(_ script: String) -> Bool {
