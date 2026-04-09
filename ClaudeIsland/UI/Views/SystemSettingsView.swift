@@ -85,6 +85,9 @@ final class SystemSettingsWindow {
         w.hasShadow = true
         w.isMovableByWindowBackground = true
         w.contentView = hostingView
+        w.contentView?.wantsLayer = true
+        w.contentView?.layer?.cornerRadius = 16
+        w.contentView?.layer?.masksToBounds = true
 
         if let screen = NSScreen.main {
             let f = screen.frame
