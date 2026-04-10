@@ -6,6 +6,8 @@ import NotchDemo from "./components/NotchDemo"
 import Features from "./components/Features"
 import CodeLight from "./components/CodeLight"
 import HowItWorks from "./components/HowItWorks"
+import Pricing from "./components/Pricing"
+import FAQ from "./components/FAQ"
 import OpenSource from "./components/OpenSource"
 import Footer from "./components/Footer"
 
@@ -19,6 +21,8 @@ function App() {
       <Features />
       <CodeLight />
       <HowItWorks />
+      <Pricing />
+      <FAQ />
       <OpenSource />
       <Footer />
     </I18nProvider>

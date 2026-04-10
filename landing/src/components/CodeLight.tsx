@@ -1,11 +1,7 @@
-import { Smartphone, Star, Download, Zap, ShieldCheck, Terminal, Camera, Link, Lock } from "lucide-react"
+import { Smartphone, Download, Zap, ShieldCheck, Terminal, Camera, Link, Lock, MessageCircle } from "lucide-react"
 import { useI18n } from "../lib/i18n"
-
-const GithubIcon = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-  </svg>
-)
+import SpotlightCard from "./reactbits/SpotlightCard"
+import TiltedCard from "./reactbits/TiltedCard"
 
 const base = import.meta.env.BASE_URL
 
@@ -13,14 +9,6 @@ const featureIcons = [Smartphone, ShieldCheck, Terminal, Zap, Camera, Link, Lock
 
 export default function CodeLight() {
   const { t } = useI18n()
-
-  const screenshots = [
-    { src: `${base}codelight/macs-list.png`, label: t("codelight.macs") },
-    { src: `${base}codelight/sessions.png`, label: t("codelight.sessions") },
-    { src: `${base}codelight/commands.png`, label: t("codelight.commands") },
-    { src: `${base}codelight/chat.png`, label: t("codelight.chat") },
-    { src: `${base}codelight/settings.png`, label: t("codelight.settings") },
-  ]
 
   const features = [1, 2, 3, 4, 5, 6, 7].map((i) => ({
     Icon: featureIcons[i - 1],
@@ -41,7 +29,7 @@ export default function CodeLight() {
           </div>
 
           <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-text-primary">
-            📱 {t("codelight.title")}
+            {t("codelight.title")}
           </h2>
 
           <p className="text-base sm:text-lg text-text-muted mt-4 max-w-lg mx-auto italic">
@@ -51,26 +39,39 @@ export default function CodeLight() {
           <p className="text-sm text-text-muted mt-4 max-w-xl mx-auto leading-relaxed">
             {t("codelight.desc")}
           </p>
+
+          {/* Beta badge */}
+          <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber/20 bg-amber/5">
+            <span className="w-2 h-2 rounded-full bg-amber animate-pulse" />
+            <span className="font-mono text-xs text-amber font-medium">{t("codelight.beta")}</span>
+          </div>
+          <p className="text-xs text-text-muted/70 mt-2 max-w-md mx-auto">
+            {t("codelight.betaDesc")}
+          </p>
         </div>
 
-        {/* Lock screen hero image */}
-        <div className="flex justify-center mb-12" style={{ animation: 'heroEnter 0.8s ease-out 0.1s both' }}>
-          <img
-            src={`${base}codelight/lockscreen.jpeg`}
-            alt="Code Light Lock Screen"
-            className="w-full max-w-xl rounded-2xl shadow-[0_20px_80px_rgba(52,211,153,0.15)] border border-white/[0.06]"
-          />
-        </div>
-
-        {/* Screenshot grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mb-16" style={{ animation: 'heroEnter 0.8s ease-out 0.2s both' }}>
-          {screenshots.map((s, i) => (
-            <div key={i} className="text-center group">
-              <div className="rounded-xl overflow-hidden border border-white/[0.06] shadow-lg transition-transform duration-300 group-hover:scale-[1.03]">
-                <img src={s.src} alt={s.label} className="w-full h-auto" />
-              </div>
-              <p className="text-[10px] sm:text-xs text-text-muted mt-2 font-mono">{s.label}</p>
-            </div>
+        {/* Showcase - tilted screenshots */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-16 max-w-3xl mx-auto" style={{ animation: 'heroEnter 0.8s ease-out 0.1s both' }}>
+          {[
+            { src: `${base}codelight/lockscreen-dynamic.png`, label: t("codelight.showcase.lockscreen") },
+            { src: `${base}codelight/chat-workflow.png`, label: t("codelight.showcase.workflow") },
+            { src: `${base}codelight/appstore-pairing.png`, label: t("codelight.showcase.appstore") },
+          ].map((img, i) => (
+            <TiltedCard
+              key={i}
+              imageSrc={img.src}
+              altText={img.label}
+              captionText={img.label}
+              containerHeight="300px"
+              containerWidth="100%"
+              imageHeight="280px"
+              imageWidth="100%"
+              rotateAmplitude={8}
+              scaleOnHover={1.04}
+              showMobileWarning={false}
+              showTooltip={false}
+              displayOverlayContent={false}
+            />
           ))}
         </div>
 
@@ -78,32 +79,26 @@ export default function CodeLight() {
         <div style={{ animation: 'heroEnter 0.8s ease-out 0.3s both' }}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-12">
             {features.map((f, i) => (
-              <div
+              <SpotlightCard
                 key={i}
-                className="group relative rounded-2xl p-5 transition-all duration-300 hover:scale-[1.02]"
-                style={{
-                  background: 'rgba(52,211,153,0.04)',
-                  border: '1px solid rgba(52,211,153,0.12)',
-                }}
+                className="!rounded-2xl !p-5 !bg-green/[0.03] !border-green/[0.12]"
+                spotlightColor="rgba(52, 211, 153, 0.2)"
               >
-                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'rgba(52,211,153,0.08)' }} />
-                <div className="relative z-10">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: 'rgba(52,211,153,0.15)' }}>
-                    <f.Icon size={18} className="text-green" />
-                  </div>
-                  <h4 className="text-sm font-bold text-text-primary mb-1">{f.title}</h4>
-                  <p className="text-xs text-text-muted leading-relaxed">{f.desc}</p>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: 'rgba(52,211,153,0.15)' }}>
+                  <f.Icon size={18} className="text-green" />
                 </div>
-              </div>
+                <h4 className="text-sm font-bold text-text-primary mb-1">{f.title}</h4>
+                <p className="text-xs text-text-muted leading-relaxed">{f.desc}</p>
+              </SpotlightCard>
             ))}
           </div>
         </div>
 
-        {/* Status + CTA */}
+        {/* Beta + CTA */}
         <div className="text-center" style={{ animation: 'heroEnter 0.8s ease-out 0.4s both' }}>
           <p className="text-xs text-text-muted mb-5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-400/10 border border-green-400/20 text-green-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber/10 border border-amber/20 text-amber">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse" />
               {t("codelight.status")}
             </span>
           </p>
@@ -116,18 +111,14 @@ export default function CodeLight() {
               <Download size={16} />
               {t("codelight.appstore")}
             </a>
-
-            <a
-              href="https://github.com/MioMioOS/CodeLight"
-              className="inline-flex items-center gap-2.5 glass px-8 py-3.5 rounded-xl font-mono text-sm text-green/80 transition-all duration-300 hover:scale-[1.03] hover:text-text-primary hover:shadow-[0_0_30px_rgba(52,211,153,0.1)]"
-            >
-              <GithubIcon size={16} />
-              <Star size={14} />
-              {t("codelight.star")}
-            </a>
           </div>
 
-          <p className="text-xs text-text-muted/60 mt-4 max-w-md mx-auto">
+          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-text-muted/60">
+            <MessageCircle size={12} />
+            <span>{t("codelight.feedbackCta")}</span>
+          </div>
+
+          <p className="text-xs text-text-muted/60 mt-3 max-w-md mx-auto">
             {t("codelight.regionNote")}
           </p>
         </div>

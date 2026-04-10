@@ -5,6 +5,9 @@ import MacScreenContent from "./MacScreenContent"
 import CommunityModal from "./CommunityModal"
 import { useI18n } from "../lib/i18n"
 import logo from "../lib/logo"
+import BlurText from "./reactbits/BlurText"
+import ShinyText from "./reactbits/ShinyText"
+import StarBorder from "./reactbits/StarBorder"
 
 const GithubIcon = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -22,25 +25,34 @@ export default function Hero() {
         <MacbookScroll
           title={
             <div className="flex flex-col items-center gap-6">
-              <img src={logo} alt="CodeIsland" className="w-14 h-14 rounded-2xl shadow-lg" style={{ animation: 'heroEnter 1s ease-out both' }} />
+              <img src={logo} alt="MioIsland" className="w-14 h-14 rounded-2xl shadow-lg" style={{ animation: 'heroEnter 1s ease-out both' }} />
 
-              <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight leading-[0.95] text-center" style={{ animation: 'heroEnter 1s ease-out 0.1s both' }}>
-                <span className="text-text-primary">{t("hero.title1")}</span>
+              <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight leading-[0.95] text-center">
+                <BlurText
+                  text={t("hero.title1")}
+                  className="text-text-primary justify-center !text-2xl sm:!text-4xl md:!text-6xl font-extrabold"
+                  delay={80}
+                  animateBy="letters"
+                />
                 <br />
-                <span className="text-text-primary">{t("hero.title2")}</span>
-                <span
-                  className="text-transparent bg-clip-text"
-                  style={{
-                    backgroundImage: 'linear-gradient(135deg, #34d399, #6ee7b7, #a78bfa)',
-                    backgroundSize: '200% 200%',
-                    animation: 'gradient-shift 5s ease-in-out infinite',
-                  }}
-                >
-                  {t("hero.title3")}
+                <span className="inline-flex flex-wrap justify-center">
+                  <BlurText
+                    text={t("hero.title2")}
+                    className="text-text-primary justify-center !text-2xl sm:!text-4xl md:!text-6xl font-extrabold"
+                    delay={80}
+                    animateBy="letters"
+                  />
+                  <ShinyText
+                    text={t("hero.title3")}
+                    className="!text-2xl sm:!text-4xl md:!text-6xl font-extrabold"
+                    color="#34d399"
+                    shineColor="#6ee7b7"
+                    speed={3}
+                  />
                 </span>
               </h1>
 
-              <p className="text-sm sm:text-base sm:text-lg text-text-muted max-w-xl mx-auto leading-relaxed text-center px-4" style={{ animation: 'heroEnter 1s ease-out 0.2s both' }}>
+              <p className="text-sm sm:text-base sm:text-lg text-text-muted max-w-xl mx-auto leading-relaxed text-center px-4" style={{ animation: 'heroEnter 1s ease-out 0.6s both' }}>
                 {t("hero.subtitle1")}
                 <br />
                 {t("hero.subtitle2")}
@@ -48,13 +60,16 @@ export default function Hero() {
                 <span className="text-green/80">{t("hero.subtitle3")}</span>
               </p>
 
-              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-center px-4 sm:px-0" style={{ animation: 'heroEnter 1s ease-out 0.3s both' }}>
-                <a
-                  href="https://github.com/MioMioOS/MioIsland/releases"
-                  className="group flex items-center justify-center gap-2.5 bg-green text-deep px-8 py-3.5 rounded-xl font-mono text-sm font-bold transition-all duration-300 hover:shadow-[0_0_40px_rgba(52,211,153,0.3)] hover:scale-[1.03]"
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-center px-4 sm:px-0" style={{ animation: 'heroEnter 1s ease-out 0.8s both' }}>
+                <StarBorder
+                  as="a"
+                  href="https://github.com/MioMioOS/MioIsland/releases/download/v1.11.0/MioIsland-v1.11.0.dmg"
+                  color="#34d399"
+                  speed="4s"
+                  className="!rounded-xl"
                 >
-                  {t("hero.download")}
-                </a>
+                  <span className="font-mono text-sm font-bold">{t("hero.download")}</span>
+                </StarBorder>
                 <button
                   onClick={() => setCommunityOpen(true)}
                   className="group flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl font-mono text-sm text-text-primary transition-all duration-300 hover:scale-[1.03] cursor-pointer"
@@ -78,7 +93,7 @@ export default function Hero() {
           }
           badge={
             <a href="https://github.com/MioMioOS/MioIsland">
-              <img src={logo} alt="CodeIsland" className="h-10 w-10 rounded-lg -rotate-12 transform shadow-lg" />
+              <img src={logo} alt="MioIsland" className="h-10 w-10 rounded-lg -rotate-12 transform shadow-lg" />
             </a>
           }
           screenContent={<MacScreenContent />}

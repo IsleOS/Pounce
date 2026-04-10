@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Download, Copy, Check, ExternalLink, Rocket, Zap } from "lucide-react"
+import { Download, Copy, Check, Smartphone, Link2, Rocket } from "lucide-react"
 import { useI18n } from "../lib/i18n"
 
 const BREW_CMD = "brew install MioMioOS/tap/mioisland"
@@ -14,17 +14,83 @@ export default function HowItWorks() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const steps = [
+    {
+      num: "01",
+      Icon: Download,
+      titleKey: "how.step1.title",
+      descKey: "how.step1.desc",
+      color: "#34d399",
+    },
+    {
+      num: "02",
+      Icon: Smartphone,
+      titleKey: "how.step2.title",
+      descKey: "how.step2.desc",
+      color: "#a78bfa",
+    },
+    {
+      num: "03",
+      Icon: Link2,
+      titleKey: "how.step3.title",
+      descKey: "how.step3.desc",
+      color: "#fbbf24",
+    },
+  ]
+
   return (
     <section id="how-it-works" className="relative z-20 bg-deep py-20 sm:py-32 px-4 sm:px-6 noise">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_100%,rgba(52,211,153,0.04)_0%,transparent_60%)]" />
-      <div className="max-w-2xl mx-auto relative z-10">
-        <div style={{ animation: 'heroEnter 0.8s ease-out both' }} className="text-center mb-10 sm:mb-14">
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div style={{ animation: 'heroEnter 0.8s ease-out both' }} className="text-center mb-12 sm:mb-16">
           <span className="font-mono text-xs text-green uppercase tracking-[0.3em]">{t("how.tag")}</span>
-          <h2 className="font-display text-3xl sm:text-4xl sm:text-5xl font-extrabold text-text-primary mt-4">{t("how.install.title")}</h2>
+          <h2 className="font-display text-3xl sm:text-4xl sm:text-5xl font-extrabold text-text-primary mt-4">{t("how.title")}</h2>
         </div>
 
-        {/* Main install card */}
-        <div style={{ animation: 'heroEnter 0.6s ease-out 0.1s both' }} className="glass rounded-2xl p-6 sm:p-8 border border-green/10">
+        {/* 3-step flow */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          {steps.map((step, i) => (
+            <div
+              key={step.num}
+              style={{ animation: `heroEnter 0.6s ease-out ${i * 0.12}s both` }}
+              className="relative glass rounded-2xl p-6 text-center group hover:translate-y-[-4px] transition-all duration-500"
+            >
+              {/* Step number */}
+              <div
+                className="font-mono text-4xl font-bold mb-4 opacity-20 group-hover:opacity-40 transition-opacity"
+                style={{ color: step.color }}
+              >
+                {step.num}
+              </div>
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
+                style={{ background: `${step.color}15`, border: `1px solid ${step.color}25` }}
+              >
+                <step.Icon size={22} style={{ color: step.color }} />
+              </div>
+              <h3 className="font-display text-lg font-bold text-text-primary mb-2">
+                {t(step.titleKey as any)}
+              </h3>
+              <p className="text-sm text-text-muted leading-relaxed">
+                {t(step.descKey as any)}
+              </p>
+
+              {/* Connector arrow (hidden on mobile, shown between cards on desktop) */}
+              {i < 2 && (
+                <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-white/10 text-2xl">
+                  →
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Brew install card */}
+        <div style={{ animation: 'heroEnter 0.6s ease-out 0.4s both' }} className="glass rounded-2xl p-6 sm:p-8 border border-green/10 max-w-2xl mx-auto">
+          <div className="text-center mb-4">
+            <span className="font-mono text-xs text-green/60">{t("how.step1.title")}</span>
+          </div>
+
           {/* Brew terminal */}
           <div className="rounded-xl p-5 mb-4" style={{ background: 'rgba(0,0,0,0.3)' }}>
             <div className="flex items-center gap-1.5 mb-3">
@@ -41,37 +107,16 @@ export default function HowItWorks() {
               </button>
             </div>
             <code className="font-mono text-sm sm:text-base text-green leading-relaxed block">
-              <span className="text-white/20">$</span> {t("how.install.cmd")}
+              <span className="text-white/20">$</span> {BREW_CMD}
             </code>
           </div>
 
-          {/* DMG alternative */}
-          <div className="flex items-center justify-center gap-2.5 mb-6">
-            <div className="h-px flex-1 bg-white/[0.06]" />
-            <span className="text-xs text-text-muted/40 font-mono">{t("how.install.or")}</span>
-            <div className="h-px flex-1 bg-white/[0.06]" />
-          </div>
-
-          <a
-            href="https://github.com/MioMioOS/MioIsland/releases"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-mono text-green/80 hover:text-green transition-all duration-200 hover:bg-green/[0.06] border border-green/10 hover:border-green/20"
-          >
-            <Download size={14} />
-            {t("how.install.dmg")}
-            <ExternalLink size={11} className="opacity-50" />
-          </a>
         </div>
 
-        {/* What happens next — compact info row */}
-        <div style={{ animation: 'heroEnter 0.6s ease-out 0.2s both' }} className="flex flex-col sm:flex-row gap-4 mt-8">
-          <div className="flex-1 flex items-start gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(52,211,153,0.03)' }}>
-            <Rocket size={16} className="text-green/50 mt-0.5 shrink-0" />
-            <p className="text-xs text-text-muted leading-relaxed">{t("how.flow.auto")}</p>
-          </div>
-          <div className="flex-1 flex items-start gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(52,211,153,0.03)' }}>
-            <Zap size={16} className="text-green/50 mt-0.5 shrink-0" />
-            <p className="text-xs text-text-muted leading-relaxed">{t("how.flow.result")}</p>
-          </div>
+        {/* Result hint */}
+        <div style={{ animation: 'heroEnter 0.6s ease-out 0.5s both' }} className="flex items-center justify-center gap-3 mt-8 px-4">
+          <Rocket size={16} className="text-green/50 shrink-0" />
+          <p className="text-sm text-text-muted text-center">{t("how.result")}</p>
         </div>
       </div>
     </section>

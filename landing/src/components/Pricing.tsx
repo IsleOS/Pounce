@@ -1,0 +1,119 @@
+import { Check, Monitor, Smartphone } from "lucide-react"
+import { useI18n } from "../lib/i18n"
+import GlassSurface from "./reactbits/GlassSurface"
+
+export default function Pricing() {
+  const { t } = useI18n()
+
+  const mioislandFeatures = [
+    "pricing.mioisland.f1",
+    "pricing.mioisland.f2",
+    "pricing.mioisland.f3",
+    "pricing.mioisland.f4",
+    "pricing.mioisland.f5",
+  ] as const
+
+  const codelightFeatures = [
+    "pricing.codelight.f1",
+    "pricing.codelight.f2",
+    "pricing.codelight.f3",
+    "pricing.codelight.f4",
+    "pricing.codelight.f5",
+  ] as const
+
+  return (
+    <section id="pricing" className="relative z-20 bg-deep py-20 sm:py-32 px-4 sm:px-6 noise">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(52,211,153,0.06)_0%,transparent_60%)]" />
+      <div className="max-w-5xl mx-auto relative z-10">
+        {/* Header */}
+        <div style={{ animation: "heroEnter 0.8s ease-out both" }} className="text-center mb-12 sm:mb-20">
+          <span className="font-mono text-xs text-green uppercase tracking-[0.3em]">{t("pricing.tag" as any)}</span>
+          <h2 className="font-display text-3xl sm:text-4xl sm:text-5xl font-extrabold text-text-primary mt-4">{t("pricing.title" as any)}</h2>
+        </div>
+
+        {/* Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+          {/* MioIsland Card */}
+          <GlassSurface width="100%" height="auto" borderRadius={16} blur={8} opacity={0.15} brightness={1.2}>
+            <div
+              style={{ animation: "heroEnter 0.6s ease-out 0.1s both" }}
+              className="rounded-2xl p-6 sm:p-8 flex flex-col transition-all duration-500 hover:translate-y-[-4px] hover:shadow-[0_20px_60px_rgba(52,211,153,0.08)] w-full"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-green/10 border border-green/15 flex items-center justify-center">
+                  <Monitor size={20} className="text-green" />
+                </div>
+                <div>
+                  <h3 className="font-display text-xl font-bold text-text-primary">{t("pricing.mioisland.name" as any)}</h3>
+                </div>
+                <span className="ml-auto font-mono text-xs bg-green/15 text-green border border-green/20 rounded-full px-3 py-1">
+                  {t("pricing.mioisland.price" as any)}
+                </span>
+              </div>
+              <p className="text-sm text-text-muted mb-6 leading-relaxed">{t("pricing.mioisland.desc" as any)}</p>
+              <ul className="space-y-3 mb-8 flex-1">
+                {mioislandFeatures.map((key) => (
+                  <li key={key} className="flex items-start gap-3">
+                    <Check size={16} className="text-green mt-0.5 shrink-0" />
+                    <span className="text-sm text-text-secondary">{t(key as any)}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="https://github.com/MioMioOS/MioIsland/releases"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center font-display font-bold text-sm bg-green text-deep rounded-xl py-3 transition-all duration-300 hover:shadow-[0_0_30px_rgba(52,211,153,0.3)] hover:scale-[1.02]"
+              >
+                {t("pricing.mioisland.cta" as any)}
+              </a>
+            </div>
+          </GlassSurface>
+
+          {/* CodeLight Card */}
+          <GlassSurface width="100%" height="auto" borderRadius={16} blur={8} opacity={0.15} brightness={1.2}>
+            <div
+              style={{ animation: "heroEnter 0.6s ease-out 0.2s both" }}
+              className="rounded-2xl p-6 sm:p-8 flex flex-col transition-all duration-500 hover:translate-y-[-4px] hover:shadow-[0_20px_60px_rgba(124,58,237,0.08)] w-full"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-purple-accent/10 border border-purple-accent/15 flex items-center justify-center">
+                  <Smartphone size={20} className="text-purple-accent" />
+                </div>
+                <div>
+                  <h3 className="font-display text-xl font-bold text-text-primary">{t("pricing.codelight.name" as any)}</h3>
+                </div>
+                <span className="ml-auto font-mono text-xs bg-amber/15 text-amber border border-amber/20 rounded-full px-3 py-1">
+                  {t("pricing.codelight.beta" as any)}
+                </span>
+              </div>
+              <p className="text-sm text-text-muted mb-6 leading-relaxed">{t("pricing.codelight.desc" as any)}</p>
+              <ul className="space-y-3 mb-8 flex-1">
+                {codelightFeatures.map((key) => (
+                  <li key={key} className="flex items-start gap-3">
+                    <Check size={16} className="text-purple-accent mt-0.5 shrink-0" />
+                    <span className="text-sm text-text-secondary">{t(key as any)}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="https://apps.apple.com/us/app/code-light/id6761744871"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center font-display font-bold text-sm bg-purple-accent text-text-primary rounded-xl py-3 transition-all duration-300 hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] hover:scale-[1.02]"
+              >
+                {t("pricing.codelight.cta" as any)}
+              </a>
+              <p className="text-xs text-text-muted mt-3 text-center">{t("pricing.codelight.future" as any)}</p>
+            </div>
+          </GlassSurface>
+        </div>
+
+        {/* Feedback CTA */}
+        <div style={{ animation: "heroEnter 0.6s ease-out 0.35s both" }} className="mt-12 sm:mt-16 text-center">
+          <p className="text-sm sm:text-base text-text-muted max-w-xl mx-auto leading-relaxed">{t("pricing.feedback" as any)}</p>
+        </div>
+      </div>
+    </section>
+  )
+}

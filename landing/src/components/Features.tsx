@@ -1,6 +1,7 @@
 import { Cat, Zap, ShieldCheck, Monitor, Terminal, Bell, Activity, Globe } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { useI18n } from "../lib/i18n"
+import SpotlightCard from "./reactbits/SpotlightCard"
 
 export default function Features() {
   const { t } = useI18n()
@@ -26,16 +27,22 @@ export default function Features() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {features.map((f, i) => (
-            <div key={f.titleKey} style={{ animation: `heroEnter 0.6s ease-out ${i * 0.08}s both` }} className="group glass rounded-2xl p-5 sm:p-7 transition-all duration-500 hover:translate-y-[-4px] hover:shadow-[0_20px_60px_rgba(124,58,237,0.08)]">
-              <div className="flex items-start justify-between mb-4 sm:mb-5">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-green/10 border border-green/15 flex items-center justify-center">
-                  <f.Icon size={18} className="text-green" />
+            <SpotlightCard
+              key={f.titleKey}
+              className="!rounded-2xl !p-5 sm:!p-7 !bg-white/[0.02] !border-white/[0.06] transition-all duration-500 hover:translate-y-[-4px]"
+              spotlightColor="rgba(52, 211, 153, 0.15)"
+            >
+              <div style={{ animation: `heroEnter 0.6s ease-out ${i * 0.08}s both` }} className="group">
+                <div className="flex items-start justify-between mb-4 sm:mb-5">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-green/10 border border-green/15 flex items-center justify-center">
+                    <f.Icon size={18} className="text-green" />
+                  </div>
+                  <pre className="font-mono text-[9px] sm:text-[10px] leading-tight text-purple-light/30 group-hover:text-green/40 transition-colors duration-500 text-right">{f.ascii}</pre>
                 </div>
-                <pre className="font-mono text-[9px] sm:text-[10px] leading-tight text-purple-light/30 group-hover:text-green/40 transition-colors duration-500 text-right">{f.ascii}</pre>
+                <h3 className="font-display text-base sm:text-lg font-bold text-text-primary group-hover:text-green transition-colors duration-300">{t(f.titleKey as any)}</h3>
+                <p className="text-xs sm:text-sm text-text-muted mt-2 leading-relaxed">{t(f.descKey as any)}</p>
               </div>
-              <h3 className="font-display text-base sm:text-lg font-bold text-text-primary group-hover:text-green transition-colors duration-300">{t(f.titleKey as any)}</h3>
-              <p className="text-xs sm:text-sm text-text-muted mt-2 leading-relaxed">{t(f.descKey as any)}</p>
-            </div>
+            </SpotlightCard>
           ))}
         </div>
       </div>
