@@ -52,9 +52,22 @@ extension NSScreen {
     }
 
     /// Stable string identifier for per-screen settings persistence.
-    /// Derived from CGDirectDisplayID.
+    /// Uses vendor+model+serial for external displays (survives reboots
+    /// and port changes). Falls back to CGDirectDisplayID when the
+    /// hardware identifiers are unavailable (returns 0 for all three).
     var persistentID: String {
-        let id = (deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID) ?? 0
-        return String(id)
+        guard let displayID = deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID else {
+            return "0"
+        }
+        let vendor = CGDisplayVendorNumber(displayID)
+        let model  = CGDisplayModelNumber(displayID)
+        let serial = CGDisplaySerialNumber(displayID)
+        // If hardware identifiers are available, use the stable composite key.
+        // The triple (0,0,0) means the display doesn't report EDID data —
+        // fall back to the session-scoped CGDirectDisplayID.
+        if vendor == 0, model == 0, serial == 0 {
+            return String(displayID)
+        }
+        return "\(vendor)-\(model)-\(serial)"
     }
 }

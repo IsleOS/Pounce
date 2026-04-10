@@ -88,14 +88,21 @@ struct NotchCustomization: Codable, Equatable {
         self.showUsageBar = try c.decodeIfPresent(Bool.self, forKey: .showUsageBar) ?? true
         self.hardwareNotchMode = try c.decodeIfPresent(HardwareNotchMode.self, forKey: .hardwareNotchMode) ?? .auto
         self.screenGeometries = try c.decodeIfPresent([String: ScreenGeometry].self, forKey: .screenGeometries) ?? [:]
-        self.defaultGeometry = try c.decodeIfPresent(ScreenGeometry.self, forKey: .defaultGeometry) ?? .init()
 
-        // Legacy migration: old top-level geometry fields -> defaultGeometry
-        if let legacyWidth = try c.decodeIfPresent(CGFloat.self, forKey: .maxWidth) {
-            self.defaultGeometry.maxWidth = legacyWidth
-        }
-        if let legacyOffset = try c.decodeIfPresent(CGFloat.self, forKey: .horizontalOffset) {
-            self.defaultGeometry.horizontalOffset = legacyOffset
+        if let existing = try c.decodeIfPresent(ScreenGeometry.self, forKey: .defaultGeometry) {
+            // New-format blob: use as-is, ignore any stale legacy keys
+            self.defaultGeometry = existing
+        } else {
+            // No defaultGeometry key — either legacy blob or fresh install.
+            // Migrate old top-level fields into a fresh default.
+            var geo = ScreenGeometry()
+            if let legacyWidth = try c.decodeIfPresent(CGFloat.self, forKey: .maxWidth) {
+                geo.maxWidth = legacyWidth
+            }
+            if let legacyOffset = try c.decodeIfPresent(CGFloat.self, forKey: .horizontalOffset) {
+                geo.horizontalOffset = legacyOffset
+            }
+            self.defaultGeometry = geo
         }
     }
 
