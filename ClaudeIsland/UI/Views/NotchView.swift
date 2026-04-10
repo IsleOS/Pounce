@@ -140,9 +140,16 @@ struct NotchView: View {
     // MARK: - Sizing
 
     private var closedNotchSize: CGSize {
-        CGSize(
+        let geo = notchStore.customization.geometry(for: viewModel.screenID)
+        let height: CGFloat
+        if viewModel.hasPhysicalNotch {
+            height = viewModel.deviceNotchRect.height
+        } else {
+            height = NotchHardwareDetector.clampedHeight(geo.notchHeight)
+        }
+        return CGSize(
             width: viewModel.deviceNotchRect.width,
-            height: viewModel.deviceNotchRect.height
+            height: height
         )
     }
 
@@ -161,7 +168,8 @@ struct NotchView: View {
     /// the hardware shape.
     private var expansionWidth: CGFloat {
         guard hasActiveSessions else { return 0 }
-        let userMax = notchStore.customization.maxWidth
+        let geo = notchStore.customization.geometry(for: viewModel.screenID)
+        let userMax = geo.maxWidth
         let userExpansion = max(0, userMax - closedNotchSize.width)
         if compactCollapsed {
             return min(100, userExpansion)
@@ -212,8 +220,9 @@ struct NotchView: View {
     /// render time so an off-screen stored value on a smaller
     /// secondary display never bleeds past the edge. Spec 5.5.
     private var clampedHorizontalOffset: CGFloat {
-        NotchHardwareDetector.clampedHorizontalOffset(
-            storedOffset: notchStore.customization.horizontalOffset,
+        let geo = notchStore.customization.geometry(for: viewModel.screenID)
+        return NotchHardwareDetector.clampedHorizontalOffset(
+            storedOffset: geo.horizontalOffset,
             runtimeWidth: viewModel.status == .opened ? notchSize.width : closedContentWidth,
             screenWidth: viewModel.screenRect.width
         )
