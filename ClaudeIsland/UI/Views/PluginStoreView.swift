@@ -15,6 +15,10 @@ struct PluginStoreView: View {
     @ObservedObject private var store = NotchCustomizationStore.shared
     @ObservedObject private var downloader = PluginDownloader.shared
     @State private var downloadingId: String?
+    @State private var showInstallSheet = false
+    @State private var installURL = ""
+    @State private var installStatus: String?
+    @State private var isInstalling = false
 
     @State private var selectedCategory = 0
 
@@ -22,13 +26,30 @@ struct PluginStoreView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Picker("", selection: $selectedCategory) {
-                ForEach(0..<categories.count, id: \.self) { i in
-                    Text(categories[i]).tag(i)
+            HStack {
+                Picker("", selection: $selectedCategory) {
+                    ForEach(0..<categories.count, id: \.self) { i in
+                        Text(categories[i]).tag(i)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 300)
+
+                Spacer()
+
+                Button {
+                    showInstallSheet.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 12))
+                        Text("Install")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundColor(.green)
+                }
+                .buttonStyle(.plain)
             }
-            .pickerStyle(.segmented)
-            .frame(maxWidth: 300)
 
             switch selectedCategory {
             case 0: themesSection
@@ -55,6 +76,9 @@ struct PluginStoreView: View {
         .padding(20)
         .task {
             await downloader.fetchRegistry()
+        }
+        .popover(isPresented: $showInstallSheet, arrowEdge: .bottom) {
+            installSheet
         }
     }
 
@@ -268,10 +292,170 @@ struct PluginStoreView: View {
         .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.05)))
     }
 
+    // MARK: - Install Sheet
+
+    private var installSheet: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Install Plugin")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
+
+            // URL install
+            VStack(alignment: .leading, spacing: 6) {
+                Text("From URL")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.6))
+                HStack(spacing: 8) {
+                    TextField("https://github.com/.../plugin.json", text: $installURL)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.9))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.white.opacity(0.08))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
+                        )
+                    Button {
+                        Task { await installFromURL() }
+                    } label: {
+                        Text(isInstalling ? "..." : "Install")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.green)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(RoundedRectangle(cornerRadius: 6).fill(Color.green.opacity(0.15)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(installURL.isEmpty || isInstalling)
+                }
+            }
+
+            // Divider
+            HStack {
+                Rectangle().fill(Color.white.opacity(0.1)).frame(height: 1)
+                Text("or").font(.system(size: 10)).foregroundColor(.white.opacity(0.3))
+                Rectangle().fill(Color.white.opacity(0.1)).frame(height: 1)
+            }
+
+            // Local folder
+            Button {
+                installFromFolder()
+            } label: {
+                HStack {
+                    Image(systemName: "folder.badge.plus")
+                        .font(.system(size: 14))
+                    Text("Choose plugin folder...")
+                        .font(.system(size: 12))
+                }
+                .foregroundColor(.white.opacity(0.7))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.05)))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
+                )
+            }
+            .buttonStyle(.plain)
+
+            // Status message
+            if let status = installStatus {
+                Text(status)
+                    .font(.system(size: 10))
+                    .foregroundColor(status.contains("✓") ? .green : .red.opacity(0.8))
+            }
+        }
+        .padding(16)
+        .frame(width: 380)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color(white: 0.12)))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
+        )
+    }
+
+    // MARK: - Install Actions
+
+    private func installFromURL() async {
+        let urlStr = installURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = URL(string: urlStr) else {
+            installStatus = "✗ Invalid URL"
+            return
+        }
+        isInstalling = true
+        installStatus = nil
+        do {
+            // Download plugin.json
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let manifest = try JSONDecoder().decode(PluginManifest.self, from: data)
+
+            // Create temp dir and save
+            let tmpDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("codeisland-install-\(manifest.id)")
+            try? FileManager.default.removeItem(at: tmpDir)
+            try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
+            try data.write(to: tmpDir.appendingPathComponent("plugin.json"))
+
+            // Determine type dir
+            let typeDir: String
+            switch manifest.type {
+            case .theme: typeDir = "themes"
+            case .buddy: typeDir = "buddies"
+            case .sound: typeDir = "sounds"
+            }
+            try PluginManager.shared.install(pluginDir: tmpDir, type: typeDir, id: manifest.id)
+            try? FileManager.default.removeItem(at: tmpDir)
+
+            installStatus = "✓ Installed \(manifest.name)"
+            installURL = ""
+        } catch {
+            installStatus = "✗ \(error.localizedDescription)"
+        }
+        isInstalling = false
+    }
+
+    private func installFromFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.message = "Select a plugin folder containing plugin.json"
+        panel.prompt = "Install"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        let pluginJsonURL = url.appendingPathComponent("plugin.json")
+        guard FileManager.default.fileExists(atPath: pluginJsonURL.path),
+              let data = try? Data(contentsOf: pluginJsonURL),
+              let manifest = try? JSONDecoder().decode(PluginManifest.self, from: data) else {
+            installStatus = "✗ No valid plugin.json found in folder"
+            return
+        }
+
+        let typeDir: String
+        switch manifest.type {
+        case .theme: typeDir = "themes"
+        case .buddy: typeDir = "buddies"
+        case .sound: typeDir = "sounds"
+        }
+
+        do {
+            try PluginManager.shared.install(pluginDir: url, type: typeDir, id: manifest.id)
+            installStatus = "✓ Installed \(manifest.name)"
+        } catch {
+            installStatus = "✗ \(error.localizedDescription)"
+        }
+    }
+
     // MARK: - Hint
 
     private var pluginDirHint: some View {
-        Text("Install plugins to ~/.config/codeisland/plugins/")
+        Text("~/.config/codeisland/plugins/")
             .font(.system(size: 10))
             .foregroundColor(.white.opacity(0.3))
     }
