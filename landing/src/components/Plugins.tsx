@@ -3,6 +3,8 @@ import type { LucideIcon } from "lucide-react"
 import { useI18n } from "../lib/i18n"
 import SpotlightCard from "./reactbits/SpotlightCard"
 
+const brandLime = "#CAFF00"
+
 export default function Plugins() {
   const { t } = useI18n()
 
@@ -15,10 +17,10 @@ export default function Plugins() {
 
   return (
     <section id="plugins" className="relative z-20 bg-deep py-20 sm:py-32 px-4 sm:px-6 noise">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(124,58,237,0.06)_0%,transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(202,255,0,0.04)_0%,transparent_60%)]" />
       <div className="max-w-5xl mx-auto relative z-10">
         <div style={{ animation: 'heroEnter 0.8s ease-out both' }} className="text-center mb-12 sm:mb-20">
-          <span className="font-mono text-xs text-green uppercase tracking-[0.3em]">{t("plugins.tag")}</span>
+          <span className="font-mono text-xs uppercase tracking-[0.3em]" style={{ color: brandLime }}>{t("plugins.tag")}</span>
           <h2 className="font-display text-3xl sm:text-4xl sm:text-5xl font-extrabold text-text-primary mt-4">{t("plugins.title")}</h2>
           <p className="text-sm sm:text-base text-text-muted mt-4 max-w-2xl mx-auto leading-relaxed">{t("plugins.desc")}</p>
         </div>
@@ -28,18 +30,18 @@ export default function Plugins() {
             <SpotlightCard
               key={c.titleKey}
               className="!rounded-2xl !p-5 sm:!p-7 !bg-white/[0.02] !border-white/[0.06] transition-all duration-500 hover:translate-y-[-4px]"
-              spotlightColor="rgba(124, 58, 237, 0.15)"
+              spotlightColor="rgba(202, 255, 0, 0.12)"
             >
               <div style={{ animation: `heroEnter 0.6s ease-out ${i * 0.1}s both` }} className="group">
                 <div className="flex items-start justify-between mb-4 sm:mb-5">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-accent/10 border border-purple-accent/15 flex items-center justify-center">
-                    <c.Icon size={18} className="text-purple-light" />
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(202,255,0,0.1)', border: '1px solid rgba(202,255,0,0.15)' }}>
+                    <c.Icon size={18} style={{ color: brandLime }} />
                   </div>
-                  <pre className="font-mono text-[9px] sm:text-[10px] leading-tight text-purple-light/30 group-hover:text-purple-accent/40 transition-colors duration-500 text-right">{c.ascii}</pre>
+                  <pre className="font-mono text-[9px] sm:text-[10px] leading-tight text-text-muted/30 group-hover:text-text-muted/50 transition-colors duration-500 text-right">{c.ascii}</pre>
                 </div>
-                <h3 className="font-display text-base sm:text-lg font-bold text-text-primary group-hover:text-purple-light transition-colors duration-300">{t(c.titleKey as any)}</h3>
+                <h3 className="font-display text-base sm:text-lg font-bold text-text-primary transition-colors duration-300" style={{ ['--hover-color' as string]: brandLime }}>{t(c.titleKey as any)}</h3>
                 <p className="text-xs sm:text-sm text-text-muted mt-2 leading-relaxed">{t(c.descKey as any)}</p>
-                <span className="inline-block mt-3 font-mono text-[10px] text-purple-light/50">{c.count}+ plugins</span>
+                <span className="inline-block mt-3 font-mono text-[10px]" style={{ color: 'rgba(202,255,0,0.5)' }}>{c.count}+ plugins</span>
               </div>
             </SpotlightCard>
           ))}
@@ -50,7 +52,8 @@ export default function Plugins() {
             href="https://miomio.chat/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-purple-accent hover:bg-purple-accent/80 text-white font-display font-bold text-sm transition-all duration-300 hover:shadow-[0_0_24px_rgba(124,58,237,0.4)]"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-black font-display font-bold text-sm transition-all duration-300"
+            style={{ background: brandLime, boxShadow: `0 0 24px rgba(202,255,0,0.3)` }}
           >
             <ExternalLink size={16} />
             {t("plugins.browse")}
@@ -59,7 +62,8 @@ export default function Plugins() {
             href="https://miomio.chat/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-purple-accent/30 hover:border-purple-accent/60 text-purple-light font-display font-bold text-sm transition-all duration-300 hover:bg-purple-accent/5"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-display font-bold text-sm transition-all duration-300 hover:bg-white/[0.03]"
+            style={{ border: '1px solid rgba(202,255,0,0.3)', color: brandLime }}
           >
             <Code2 size={16} />
             {t("plugins.developer")}
