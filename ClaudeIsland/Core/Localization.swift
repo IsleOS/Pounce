@@ -40,6 +40,59 @@ enum L10n {
     // Settings
     static var language: String { tr("Language", "语言") }
 
+    // MARK: - Rate limit notification (RateLimitMonitor)
+
+    static var rateLimitNotificationTitle: String {
+        tr("Claude Code Usage Warning", "Claude Code 用量警告")
+    }
+    static func rateLimitNotificationBody(window: String, percent: Int) -> String {
+        tr(
+            "\(window) window usage has reached \(percent)%.",
+            "\(window) 窗口用量已达 \(percent)%。"
+        )
+    }
+    static func rateLimitNotificationBodyWithReset(window: String, percent: Int, resetHint: String) -> String {
+        tr(
+            "\(window) window usage has reached \(percent)%. Resets in \(resetHint).",
+            "\(window) 窗口用量已达 \(percent)%，\(resetHint)后重置。"
+        )
+    }
+
+    // MARK: - Short duration formatting (<1min / 5min / 1h23m / 3d)
+    // Used by RateLimitMonitor to render "resets in X" hints.
+
+    static var durationLessThanOneMinute: String {
+        tr("<1min", "<1分钟")
+    }
+    static func durationMinutes(_ m: Int) -> String {
+        tr("\(m)min", "\(m)分钟")
+    }
+    static func durationHoursMinutes(_ h: Int, _ m: Int) -> String {
+        tr("\(h)h\(m)m", "\(h)小时\(m)分钟")
+    }
+    static func durationHours(_ h: Int) -> String {
+        tr("\(h)h", "\(h)小时")
+    }
+    static func durationDays(_ d: Int) -> String {
+        tr("\(d)d", "\(d)天")
+    }
+
+    // MARK: - Notch menu
+
+    static var alertThreshold: String {
+        tr("Alert", "警告阈值")
+    }
+
+    // MARK: - Chat processing indicator
+    //
+    // Note: the existing `working` entry below is "Working..." with a
+    // trailing ellipsis (used in static labels). This new entry is bare
+    // "Working" because ProcessingIndicatorView animates dots separately
+    // on top of the base text.
+    static var workingBaseLabel: String {
+        tr("Working", "工作中")
+    }
+
     // MARK: - Anthropic API Proxy (Settings → General)
 
     static var anthropicApiProxy: String {

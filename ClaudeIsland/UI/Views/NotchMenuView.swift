@@ -402,7 +402,7 @@ struct ThresholdPickerRow: View {
                 .foregroundColor(textColor)
                 .frame(width: 16)
 
-            Text(L10n.tr("Alert", "警告阈值"))
+            Text(L10n.alertThreshold)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(textColor)
 

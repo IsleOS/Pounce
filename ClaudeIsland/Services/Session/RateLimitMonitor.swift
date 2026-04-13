@@ -199,20 +199,13 @@ class RateLimitMonitor: ObservableObject {
 
         // Send macOS notification (no system sound — SoundManager handles audio)
         let content = UNMutableNotificationContent()
-        content.title = L10n.tr(
-            "Claude Code Usage Warning",
-            "Claude Code 用量警告"
-        )
+        content.title = L10n.rateLimitNotificationTitle
         let body: String
         if resetHint.isEmpty {
-            body = L10n.tr(
-                "\(window) window usage has reached \(percent)%.",
-                "\(window) 窗口用量已达 \(percent)%。"
-            )
+            body = L10n.rateLimitNotificationBody(window: window, percent: percent)
         } else {
-            body = L10n.tr(
-                "\(window) window usage has reached \(percent)%. Resets in \(resetHint).",
-                "\(window) 窗口用量已达 \(percent)%，\(resetHint)后重置。"
+            body = L10n.rateLimitNotificationBodyWithReset(
+                window: window, percent: percent, resetHint: resetHint
             )
         }
         content.body = body
@@ -236,19 +229,19 @@ class RateLimitMonitor: ObservableObject {
         let remaining = date.timeIntervalSinceNow
         guard remaining > 0 else { return "" }
         if remaining < 60 {
-            return L10n.tr("<1min", "<1分钟")
+            return L10n.durationLessThanOneMinute
         }
         if remaining < 3600 {
             let m = Int(ceil(remaining / 60))
-            return L10n.tr("\(m)min", "\(m)分钟")
+            return L10n.durationMinutes(m)
         } else if remaining < 86400 {
             let h = Int(remaining / 3600)
             let m = Int(ceil(remaining.truncatingRemainder(dividingBy: 3600) / 60))
             return m > 0
-                ? L10n.tr("\(h)h\(m)m", "\(h)小时\(m)分钟")
-                : L10n.tr("\(h)h", "\(h)小时")
+                ? L10n.durationHoursMinutes(h, m)
+                : L10n.durationHours(h)
         }
-        return L10n.tr("\(Int(remaining / 86400))d", "\(Int(remaining / 86400))天")
+        return L10n.durationDays(Int(remaining / 86400))
     }
 
     /// Read OAuth token from macOS Keychain and call Anthropic usage API

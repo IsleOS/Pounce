@@ -529,7 +529,7 @@ struct AssistantMessageView: View {
 // MARK: - Processing Indicator
 
 struct ProcessingIndicatorView: View {
-    private static let baseTexts = [L10n.processing, L10n.tr("Working", "工作中")]
+    private static let baseTexts = [L10n.processing, L10n.workingBaseLabel]
     private let color = Color(red: 0.85, green: 0.47, blue: 0.34) // Claude orange
     private let baseText: String
 
