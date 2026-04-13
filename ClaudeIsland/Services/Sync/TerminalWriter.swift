@@ -144,25 +144,47 @@ final class TerminalWriter {
             ("com.mitchellh.ghostty", "Ghostty"),
             ("com.apple.Terminal", "Terminal")
         ]
+
+        // Build the AEAddressDesc once for Code Island — this is the ASKING app.
+        // AEDeterminePermissionToAutomateTarget checks whether this app (Code Island)
+        // is authorized to send events TO each terminal target below.
+        let codeIslandBundleId = Bundle.main.bundleIdentifier ?? "com.codeisland.app"
+        var requestorAddr = AEAddressDesc()
+        let requestorData = Data(codeIslandBundleId.utf8)
+        let requestorStatus: OSErr = requestorData.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) -> OSErr in
+            guard let baseAddress = bytes.baseAddress else { return OSErr(-1) }
+            return AECreateDesc(DescType(typeApplicationBundleID),
+                                baseAddress,
+                                bytes.count,
+                                &requestorAddr)
+        }
+        guard requestorStatus == OSErr(noErr) else {
+            return (nil, L10n.automationUnknown)
+        }
+        defer { AEDisposeDesc(&requestorAddr) }
+
         for (bundleId, label) in candidates {
             guard !NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).isEmpty else { continue }
 
-            var addr = AEAddressDesc()
-            let bundleData = Data(bundleId.utf8)
-            let createStatus: OSErr = bundleData.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) -> OSErr in
+            // Build the target address for this terminal — this is the TARGET app.
+            // The AEAddressDesc represents the recipient of AppleEvents.
+            var targetAddr = AEAddressDesc()
+            let targetData = Data(bundleId.utf8)
+            let createStatus: OSErr = targetData.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) -> OSErr in
                 guard let baseAddress = bytes.baseAddress else { return OSErr(-1) }
                 return AECreateDesc(DescType(typeApplicationBundleID),
                                     baseAddress,
                                     bytes.count,
-                                    &addr)
+                                    &targetAddr)
             }
             guard createStatus == OSErr(noErr) else {
                 return (nil, "\(label) — AECreateDesc err=\(createStatus)")
             }
-            defer { AEDisposeDesc(&addr) }
+            defer { AEDisposeDesc(&targetAddr) }
 
+            // Now the question is correctly: "Can Code Island automate this terminal?"
             let status = AEDeterminePermissionToAutomateTarget(
-                &addr,
+                &requestorAddr,
                 AEEventClass(typeWildCard),
                 AEEventID(typeWildCard),
                 false
@@ -646,13 +668,58 @@ final class TerminalWriter {
         let cwd: String?
     }
 
-    /// Enumerate every claude process with a session UUID in argv.
-    /// Supports two argv formats:
-    ///   Old: `claude --session-id <uuid> …`
-    ///   New: `claude <uuid> --settings … --hook …`  (UUID is first positional arg)
-    /// cwd resolved per pid via `lsof -p <pid> -d cwd -Fn` (lightweight: 1 line per pid).
+    /// Enumerate every running claude process.
+    ///
+    /// Primary path: read session metadata from `~/.claude/sessions/{pid}.json`
+    /// (modern Claude Code 0.x+ stores pid, sessionId, cwd, startedAt there).
+    ///
+    /// Fallback: parse `ps -Axww` output for older Claude versions that expose
+    /// session UUIDs as `--session-id <uuid>` or as the first positional arg.
     nonisolated private func listClaudeProcesses() async -> [ClaudeProcessInfo] {
-        // `-ww` = no column truncation, critical for long argv (hooks JSON)
+        let fromConfig = await discoverClaudeSessionsFromConfig()
+        if !fromConfig.isEmpty {
+            return fromConfig
+        }
+        return await listClaudeProcessesFromPs()
+    }
+
+    /// Primary: read session info from `~/.claude/sessions/*.json`.
+    /// Each file contains `{ "pid", "sessionId", "cwd", "startedAt", "kind", "entrypoint" }`.
+    /// Verifies the pid is still running via `ps -p {pid} -o pid=` before including it.
+    nonisolated private func discoverClaudeSessionsFromConfig() async -> [ClaudeProcessInfo] {
+        let sessionsDir = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude/sessions")
+        guard let contents = try? FileManager.default.contentsOfDirectory(
+            at: sessionsDir,
+            includingPropertiesForKeys: [.contentModificationDateKey]
+        ) else { return [] }
+
+        var processes: [ClaudeProcessInfo] = []
+        for url in contents where url.pathExtension == "json" {
+            guard let data = try? Data(contentsOf: url),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let pid = json["pid"] as? Int,
+                  let sessionId = json["sessionId"] as? String,
+                  Self.isUuidLike(sessionId) else { continue }
+
+            // Verify the process is still alive
+            let (out, ok) = await runShellWithTimeout(
+                "/bin/ps", ["-p", "\(pid)", "-o", "pid="], timeout: 1.0
+            )
+            guard ok,
+                  let line = out?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  line == "\(pid)" else { continue }
+
+            // Prefer cwd from the JSON; fall back to lsof if absent
+            let cwd = (json["cwd"] as? String) ?? await lsofCwd(pid: pid)
+            processes.append(ClaudeProcessInfo(pid: pid, sessionId: sessionId, cwd: cwd))
+        }
+        return processes
+    }
+
+    /// Fallback: parse `ps -Axww` output for older Claude Code versions (pre-0.x)
+    /// that expose session UUIDs on the command line.
+    nonisolated private func listClaudeProcessesFromPs() async -> [ClaudeProcessInfo] {
         let (out, ok) = await runShellWithTimeout("/bin/ps", ["-Axww", "-o", "pid=,command="], timeout: 3.0)
         guard ok, let text = out else { return [] }
 
@@ -661,12 +728,10 @@ final class TerminalWriter {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             guard trimmed.contains("/claude") || trimmed.contains(" claude ") else { continue }
 
-            // Extract pid (first token)
             let firstSpace = trimmed.firstIndex(of: " ") ?? trimmed.endIndex
             let pidStr = String(trimmed[..<firstSpace])
             guard let pid = Int(pidStr) else { continue }
 
-            // Parse UUID — try both formats.
             var sid: String?
 
             // Format 1: --session-id <uuid>
@@ -679,12 +744,10 @@ final class TerminalWriter {
                 }
             }
 
-            // Format 2: claude <uuid> …  (UUID is first positional arg after the binary path)
+            // Format 2: claude <uuid> … (UUID is first positional arg after the binary path)
             if sid == nil {
-                // Split argv after pid, drop leading empty tokens
                 let afterPid = trimmed[firstSpace...].drop(while: { $0 == " " })
                 let tokens = afterPid.split(separator: " ", omittingEmptySubsequences: true)
-                // tokens[0] = binary path ending in "claude"; tokens[1] should be UUID
                 if tokens.count >= 2,
                    tokens[0].hasSuffix("claude") || tokens[0] == "claude",
                    Self.isUuidLike(String(tokens[1])) {
