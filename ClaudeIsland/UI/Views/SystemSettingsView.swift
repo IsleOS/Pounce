@@ -426,7 +426,7 @@ private struct GeneralTab: View {
                 }
             }
 
-            SettingsCard(title: L10n.tr("Anthropic API Proxy", "Anthropic API 代理")) {
+            SettingsCard(title: L10n.anthropicApiProxy) {
                 AnthropicProxyRow()
             }
 
@@ -448,7 +448,7 @@ private struct AnthropicProxyRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField("http://127.0.0.1:7890", text: $proxyURL)
+            TextField(L10n.anthropicApiProxyPlaceholder, text: $proxyURL)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12, design: .monospaced))
                 .foregroundColor(.white.opacity(0.95))
@@ -463,25 +463,10 @@ private struct AnthropicProxyRow: View {
                         .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                 )
 
-            Text(L10n.tr(
-                """
-                Applies to: the rate-limit bar (api.anthropic.com) and every subprocess CodeIsland spawns — including the Stats plugin's claude CLI and any future plugin's shell-outs. We set HTTPS_PROXY / HTTP_PROXY / ALL_PROXY on CodeIsland's own process once at startup, so children inherit it automatically. No launchctl pollution, no per-plugin opt-in.
-
-                Does NOT apply to: CodeLight sync (our own server, stays direct), or third-party plugins that use their own URLSession to reach external APIs — those honor system proxy settings instead.
-
-                Leave empty for direct connection.
-                """,
-                """
-                作用于:刘海额度条(api.anthropic.com)和 CodeIsland 启动的所有子进程 —— 包括 Stats 插件的 claude CLI、未来任何插件的 shell-out。我们在启动时给 CodeIsland 自身进程 `setenv` 一次 HTTPS_PROXY / HTTP_PROXY / ALL_PROXY,所有子进程自动继承。不污染全局,不需要每个插件单独适配。
-
-                不作用于:CodeLight 同步(我们自己的服务器,始终直连);以及第三方插件自己用 URLSession 调用外部 API 的场景(那种走系统代理设置)。
-
-                留空即直连。
-                """
-            ))
-            .font(.system(size: 10))
-            .foregroundColor(.white.opacity(0.5))
-            .fixedSize(horizontal: false, vertical: true)
+            Text(L10n.anthropicApiProxyDescription)
+                .font(.system(size: 10))
+                .foregroundColor(.white.opacity(0.5))
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

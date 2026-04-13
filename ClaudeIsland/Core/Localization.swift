@@ -40,6 +40,37 @@ enum L10n {
     // Settings
     static var language: String { tr("Language", "语言") }
 
+    // MARK: - Anthropic API Proxy (Settings → General)
+
+    static var anthropicApiProxy: String {
+        tr("Anthropic API Proxy", "Anthropic API 代理")
+    }
+
+    static var anthropicApiProxyPlaceholder: String {
+        "http://127.0.0.1:7890"  // URL — no translation
+    }
+
+    /// Multi-paragraph help text under the Anthropic API Proxy field.
+    /// Documents scope (what it covers) and non-coverage (what it doesn't).
+    static var anthropicApiProxyDescription: String {
+        tr(
+            """
+            Applies to: the rate-limit bar (api.anthropic.com) and every subprocess CodeIsland spawns — including the Stats plugin's claude CLI and any future plugin's shell-outs. We set HTTPS_PROXY / HTTP_PROXY / ALL_PROXY on CodeIsland's own process once at startup, so children inherit it automatically. No launchctl pollution, no per-plugin opt-in.
+
+            Does NOT apply to: CodeLight sync (our own server, stays direct), or third-party plugins that use their own URLSession to reach external APIs — those honor system proxy settings instead.
+
+            Leave empty for direct connection.
+            """,
+            """
+            作用于:刘海额度条(api.anthropic.com)和 CodeIsland 启动的所有子进程 —— 包括 Stats 插件的 claude CLI、未来任何插件的 shell-out。我们在启动时给 CodeIsland 自身进程 `setenv` 一次 HTTPS_PROXY / HTTP_PROXY / ALL_PROXY,所有子进程自动继承。不污染全局,不需要每个插件单独适配。
+
+            不作用于:CodeLight 同步(我们自己的服务器,始终直连);以及第三方插件自己用 URLSession 调用外部 API 的场景(那种走系统代理设置)。
+
+            留空即直连。
+            """
+        )
+    }
+
     // MARK: - Session list
 
     static var sessions: String { tr("sessions", "个会话") }
