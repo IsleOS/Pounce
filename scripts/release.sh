@@ -57,9 +57,20 @@ if [ -d "$BUNDLED_PLUGINS_SRC" ]; then
   done
 fi
 
-# 4. Strip any residual signature (defensive — xcodebuild shouldn't add one
-#    when CODE_SIGNING_ALLOWED=NO, but we make sure)
-codesign --remove-signature "$APP_PATH" 2>/dev/null || true
+# 4. Ad-hoc sign.
+#
+# launchd on macOS Sonoma+ refuses to spawn completely unsigned binaries
+# ("Launchd job spawn failed", POSIX error 163), even if the user has
+# cleared com.apple.quarantine. An ad-hoc signature gives the binary a
+# minimal cryptographic identity with no team / no Developer ID — enough
+# to satisfy launchd, still no Gatekeeper trust, still doesn't need Apple
+# notarization. This is what Chromium, Homebrew, and most unsigned-but-
+# runnable macOS distributions do.
+#
+# --deep makes sure nested bundles (stats.bundle, etc.) also get the
+# ad-hoc treatment. --force overrides any residual xcodebuild signature.
+echo ">>> Ad-hoc signing..."
+codesign --force --deep --sign - "$APP_PATH"
 
 # 4. Package (ALWAYS ditto, never zip — regular zip adds ._* AppleDouble files)
 echo ">>> Packaging..."
