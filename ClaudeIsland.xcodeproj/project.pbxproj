@@ -301,7 +301,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.1;
+				MARKETING_VERSION = 2.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.codeisland.app;
 				PRODUCT_NAME = "Code Island";
 				REGISTER_APP_GROUPS = YES;
@@ -336,7 +336,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.1;
+				MARKETING_VERSION = 2.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.codeisland.app;
 				PRODUCT_NAME = "Code Island";
 				REGISTER_APP_GROUPS = YES;
