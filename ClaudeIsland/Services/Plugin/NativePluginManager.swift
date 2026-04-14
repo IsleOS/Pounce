@@ -18,6 +18,10 @@ final class NativePluginManager: ObservableObject {
 
     @Published private(set) var loadedPlugins: [LoadedPlugin] = []
     @Published private(set) var disabledOfficialIds: Set<String> = []
+    /// Settings-theme configs discovered in loaded plugin bundles, keyed by
+    /// plugin id. The `AppearanceTab` picker reads this to populate its list.
+    @Published private(set) var settingsThemeConfigs:
+        [String: (config: SettingsThemeConfig, resourcesURL: URL)] = [:]
 
     /// UI-facing list: loaded plugins + disabled officials shown as reinstall slots.
     struct PluginListItem: Identifiable {
@@ -218,6 +222,7 @@ final class NativePluginManager: ObservableObject {
             bundle: bundle
         )
         loadedPlugins.append(loaded)
+        registerSettingsThemeIfPresent(for: loaded, bundle: bundle)
         Self.log.info("Loaded plugin: \(pluginName) v\(pluginVersion) (\(pluginId))")
     }
 
@@ -230,6 +235,15 @@ final class NativePluginManager: ObservableObject {
             }
         }
         loadedPlugins.removeAll()
+        let hadThemes = !settingsThemeConfigs.isEmpty
+        settingsThemeConfigs.removeAll()
+        if hadThemes {
+            Task { @MainActor in
+                if SettingsThemeStore.shared.activeThemeId != nil {
+                    SettingsThemeStore.shared.reset()
+                }
+            }
+        }
     }
 
     func unload(id: String) {
@@ -239,6 +253,13 @@ final class NativePluginManager: ObservableObject {
             plugin.instance.perform(Selector(("deactivate")))
         }
         loadedPlugins.remove(at: index)
+        if settingsThemeConfigs.removeValue(forKey: id) != nil {
+            Task { @MainActor in
+                if SettingsThemeStore.shared.activeThemeId == id {
+                    SettingsThemeStore.shared.reset()
+                }
+            }
+        }
         Self.log.info("Unloaded plugin: \(id)")
     }
 
@@ -430,5 +451,52 @@ final class NativePluginManager: ObservableObject {
 
     func plugin(for id: String) -> LoadedPlugin? {
         loadedPlugins.first(where: { $0.id == id })
+    }
+
+    // MARK: - Settings theme integration
+
+    /// Minimal Decodable matching just the fields of `plugin.json` needed
+    /// for settings-theme registration. Other plugin types (buddy, sound,
+    /// media) decode through their own types.
+    private struct ThemePluginJSON: Decodable {
+        let type: String
+        let id: String
+        let settings: SettingsThemeConfig?
+    }
+
+    private func registerSettingsThemeIfPresent(
+        for plugin: LoadedPlugin,
+        bundle: Bundle
+    ) {
+        guard let jsonURL = bundle.url(forResource: "plugin", withExtension: "json"),
+              let data = try? Data(contentsOf: jsonURL),
+              let json = try? JSONDecoder().decode(ThemePluginJSON.self, from: data),
+              json.type == "theme",
+              let settings = json.settings
+        else { return }
+
+        if json.id != plugin.id {
+            Self.log.warning(
+                "Theme plugin.json id \(json.id) does not match loaded plugin id \(plugin.id)"
+            )
+        }
+
+        let resourcesURL = bundle.resourceURL
+            ?? bundle.bundleURL.appendingPathComponent("Contents/Resources")
+        settingsThemeConfigs[plugin.id] = (settings, resourcesURL)
+        Self.log.info("Discovered settings theme in plugin: \(plugin.id)")
+
+        // If this is the plugin the user had previously activated, re-apply
+        // it now (the store only remembered the id; the config lives in the
+        // bundle, which is only available once the plugin loads).
+        Task { @MainActor in
+            if SettingsThemeStore.shared.activeThemeId == plugin.id {
+                SettingsThemeStore.shared.activate(
+                    id: plugin.id,
+                    config: settings,
+                    bundleResourcesURL: resourcesURL
+                )
+            }
+        }
     }
 }

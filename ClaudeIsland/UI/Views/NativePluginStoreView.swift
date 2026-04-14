@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 
 struct NativePluginStoreView: View {
     @ObservedObject private var manager = NativePluginManager.shared
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     @State private var installURLText: String = ""
     @State private var urlInstallError: String? = nil
@@ -31,7 +32,7 @@ struct NativePluginStoreView: View {
                 HStack {
                     Text("Installed Plugins")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.7))
                     Spacer()
                     Button {
                         installFromFinder()
@@ -53,10 +54,10 @@ struct NativePluginStoreView: View {
                     VStack(spacing: 8) {
                         Image(systemName: "puzzlepiece.extension")
                             .font(.system(size: 28))
-                            .foregroundColor(.white.opacity(0.2))
+                            .foregroundColor(themeStore.palette.detailText.opacity(0.2))
                         Text("No plugins installed")
                             .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(themeStore.palette.detailText.opacity(0.4))
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 30)
@@ -68,7 +69,7 @@ struct NativePluginStoreView: View {
 
                 Text("~/.config/codeisland/plugins/")
                     .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.25))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.25))
                     .padding(.top, 4)
             }
             .padding(20)
@@ -82,19 +83,19 @@ struct NativePluginStoreView: View {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 18))
-                    .foregroundColor(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255))
+                    .foregroundColor(themeStore.palette.accent)
                     .padding(.top, 2)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("发现更多插件")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.9))
                     Text("MioIsland 插件市场收录了主题、音效、伙伴精灵和各种扩展组件。")
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.55))
                         .fixedSize(horizontal: false, vertical: true)
                     Text("浏览市场后，点击「安装」会生成一个下载地址，复制回来粘贴到下方即可一键安装。")
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.45))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.45))
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -112,12 +113,12 @@ struct NativePluginStoreView: View {
                     Image(systemName: "arrow.up.right")
                         .font(.system(size: 9, weight: .bold))
                 }
-                .foregroundColor(.black)
+                .foregroundColor(themeStore.palette.accentText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
                 .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255))
+                        .fill(themeStore.palette.accent)
                 )
             }
             .buttonStyle(.plain)
@@ -129,8 +130,8 @@ struct NativePluginStoreView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255).opacity(0.08),
-                            Color.white.opacity(0.02)
+                            themeStore.palette.accent.opacity(0.08),
+                            themeStore.palette.detailText.opacity(0.02)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -138,7 +139,7 @@ struct NativePluginStoreView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255).opacity(0.25), lineWidth: 1)
+                        .stroke(themeStore.palette.accent.opacity(0.25), lineWidth: 1)
                 )
         )
     }
@@ -153,23 +154,23 @@ struct NativePluginStoreView: View {
                     .foregroundColor(.green)
                 Text("Install from URL")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.85))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.85))
             }
             Text("Paste a plugin download URL from the marketplace")
                 .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.45))
+                .foregroundColor(themeStore.palette.detailText.opacity(0.45))
 
             HStack(spacing: 8) {
                 TextField("https://api.miomio.chat/api/i/...", text: $installURLText)
                     .textFieldStyle(.plain)
                     .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.9))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 8)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.06)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(themeStore.palette.secondaryButtonFill))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            .stroke(themeStore.palette.secondaryButtonBorder, lineWidth: 1)
                     )
                     .disabled(urlInstalling)
 
@@ -180,10 +181,10 @@ struct NativePluginStoreView: View {
                 } label: {
                     Image(systemName: "doc.on.clipboard")
                         .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.6))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 7)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.06)))
+                        .background(RoundedRectangle(cornerRadius: 6).fill(themeStore.palette.secondaryButtonFill))
                 }
                 .buttonStyle(.plain)
                 .help("Paste from clipboard")
@@ -205,12 +206,12 @@ struct NativePluginStoreView: View {
                         Text(urlInstalling ? "Installing…" : (urlInstallSuccess ? "Installed" : "Install"))
                             .font(.system(size: 11, weight: .semibold))
                     }
-                    .foregroundColor(.black)
+                    .foregroundColor(themeStore.palette.accentText)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255))
+                            .fill(themeStore.palette.accent)
                     )
                 }
                 .buttonStyle(.plain)
@@ -226,7 +227,7 @@ struct NativePluginStoreView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.white.opacity(0.04))
+                .fill(themeStore.palette.cardFill)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(Color.green.opacity(0.2), lineWidth: 1)
@@ -261,38 +262,46 @@ struct NativePluginStoreView: View {
         HStack(spacing: 12) {
             Image(systemName: item.icon)
                 .font(.system(size: 16))
-                .foregroundColor(item.isInstalled ? .white.opacity(0.7) : .white.opacity(0.3))
+                .foregroundColor(
+                    item.isInstalled
+                        ? themeStore.palette.detailText.opacity(0.7)
+                        : themeStore.palette.detailText.opacity(0.3)
+                )
                 .frame(width: 24, height: 24)
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(item.name)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(item.isInstalled ? .white.opacity(0.9) : .white.opacity(0.5))
+                        .foregroundColor(
+                            item.isInstalled
+                                ? themeStore.palette.detailText.opacity(0.9)
+                                : themeStore.palette.detailText.opacity(0.5)
+                        )
                     if item.isOfficial {
                         Text("Official")
                             .font(.system(size: 9, weight: .semibold))
-                            .foregroundColor(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255))
+                            .foregroundColor(themeStore.palette.accent)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
                             .background(
-                                Capsule().fill(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255).opacity(0.12))
+                                Capsule().fill(themeStore.palette.accent.opacity(0.12))
                             )
                     }
                     if !item.isInstalled {
                         Text("Disabled")
                             .font(.system(size: 9, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(themeStore.palette.detailText.opacity(0.4))
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
                             .background(
-                                Capsule().fill(Color.white.opacity(0.06))
+                                Capsule().fill(themeStore.palette.detailText.opacity(0.06))
                             )
                     }
                 }
                 Text("v\(item.version)")
                     .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.4))
             }
 
             Spacer()
@@ -317,19 +326,19 @@ struct NativePluginStoreView: View {
                         Text("Reinstall")
                             .font(.system(size: 11, weight: .semibold))
                     }
-                    .foregroundColor(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255))
+                    .foregroundColor(themeStore.palette.accent)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255).opacity(0.1))
+                            .fill(themeStore.palette.accent.opacity(0.1))
                     )
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: 8).fill(themeStore.palette.cardFill))
     }
 
     private func installFromFinder() {

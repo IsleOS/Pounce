@@ -19,7 +19,7 @@ struct NotchMenuView: View {
     /// phone popup and the System Settings window, and as a sparing accent
     /// (toggle dots, star button, daily card highlights) inside the notch
     /// menu which still uses a dark theme to blend with the notch shell.
-    static let brandLime = Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255)
+    static let brandLime = BrandColors.lime
 
     var body: some View {
         VStack(spacing: 0) {

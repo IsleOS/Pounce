@@ -10,6 +10,7 @@ import SwiftUI
 
 struct SoundSettingsView: View {
     @ObservedObject private var soundManager = SoundManager.shared
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -17,43 +18,43 @@ struct SoundSettingsView: View {
 
             Text(L10n.soundSettings)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(themeStore.palette.detailText)
 
             // MARK: - Global Mute
 
             Toggle(isOn: $soundManager.globalMute) {
                 Label(L10n.globalMute, systemImage: soundManager.globalMute ? "speaker.slash.fill" : "speaker.fill")
                     .font(.system(size: 12))
-                    .foregroundColor(.white)
+                    .foregroundColor(themeStore.palette.detailText)
             }
             .toggleStyle(.switch)
-            .tint(.accentColor)
+            .tint(themeStore.palette.accent)
 
             // MARK: - Volume Slider
 
             HStack(spacing: 8) {
                 Image(systemName: "speaker.fill")
                     .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.6))
 
                 Slider(value: $soundManager.volume, in: 0.0...1.0)
                     .controlSize(.small)
 
                 Image(systemName: "speaker.wave.3.fill")
                     .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.6))
             }
             .disabled(soundManager.globalMute)
             .opacity(soundManager.globalMute ? 0.4 : 1.0)
 
             Divider()
-                .background(Color.white.opacity(0.08))
+                .background(themeStore.palette.secondaryButtonBorder)
 
             // MARK: - Per-Event Toggles
 
             Text(L10n.eventSounds)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(themeStore.palette.detailText.opacity(0.6))
 
             VStack(spacing: 6) {
                 ForEach(SoundEvent.allCases, id: \.rawValue) { event in
@@ -73,6 +74,7 @@ struct SoundSettingsView: View {
 private struct SoundEventRow: View {
     let event: SoundEvent
     @ObservedObject var soundManager: SoundManager
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     @State private var isEnabled: Bool = true
 
@@ -81,11 +83,11 @@ private struct SoundEventRow: View {
             Toggle(isOn: $isEnabled) {
                 Text(event.displayName)
                     .font(.system(size: 12))
-                    .foregroundColor(.white)
+                    .foregroundColor(themeStore.palette.detailText)
             }
             .toggleStyle(.switch)
             .controlSize(.small)
-            .tint(.accentColor)
+            .tint(themeStore.palette.accent)
             .onChange(of: isEnabled) { _, newValue in
                 soundManager.setEnabled(newValue, for: event)
             }
@@ -98,7 +100,7 @@ private struct SoundEventRow: View {
             } label: {
                 Image(systemName: "speaker.wave.2")
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.7))
             }
             .buttonStyle(.plain)
             .help(L10n.previewSound(event.displayName))
@@ -114,5 +116,6 @@ private struct SoundEventRow: View {
 #Preview {
     SoundSettingsView()
         .frame(width: 280)
-        .background(Color.black.opacity(0.9))
+        .background(SettingsThemePalette.default.detailFill)
+        .environmentObject(SettingsThemeStore.shared)
 }

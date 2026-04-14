@@ -11,8 +11,9 @@
 //  a new case to `SettingsTab`, a new content view, and a single line
 //  in the dispatcher.
 //
-//  Theme: solid brand lime (#CAFF00) surface with near-black text,
-//  matching the Pair phone QR popup.
+//  Theme: colors read from SettingsThemeStore.shared.palette. Default
+//  palette is a brand-lime sidebar with dark detail panel.
+//  Theme plugins can swap the palette to restyle the entire window.
 //
 
 import AppKit
@@ -50,7 +51,7 @@ struct SystemSettingsRow: View {
             .contentShape(Rectangle())
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isHovered ? Color.white.opacity(0.08) : Color.clear)
+                    .fill(isHovered ? SettingsThemePalette.default.hover : Color.clear)
             )
         }
         .buttonStyle(.plain)
@@ -82,7 +83,10 @@ final class SystemSettingsWindow {
             return
         }
 
+        let store = SettingsThemeStore.shared
         let contentView = SystemSettingsContentView(initialTab: initialTab) { self.close() }
+            .environmentObject(store)
+            .environment(\.colorScheme, store.palette.colorScheme)
         let hostingView = NSHostingView(rootView: contentView)
         let w = KeyableSettingsWindow(
             contentRect: NSRect(x: 0, y: 0, width: 720, height: 560),
@@ -164,33 +168,12 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Shared theming constants
-
-/// Two-surface theme: the sidebar is a bold lime strip, the detail area is
-/// a dark panel so the content doesn't feel retina-burning. This also
-/// matches the existing dark-themed embedded rows (ScreenPickerRow, etc.)
-/// without forcing a colorScheme override on them.
-private enum Theme {
-    // Brand lime — ONLY used on the sidebar surface.
-    static let sidebarFill = Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255)
-    static let sidebarText = Color.black
-    static let sidebarSelected = Color.black.opacity(0.85)
-    static let sidebarSelectedText = Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255)
-    static let sidebarBorder = Color.black.opacity(0.12)
-
-    // Dark panel — used for the detail area, cards, toggles, text.
-    static let detailFill = Color(red: 0.10, green: 0.10, blue: 0.11)
-    static let detailText = Color.white
-    static let cardFill = Color.white.opacity(0.04)
-    static let cardBorder = Color.white.opacity(0.08)
-    static let subtle = Color.white.opacity(0.5)
-}
-
 // MARK: - Content root
 
 private struct SystemSettingsContentView: View {
     let initialTab: SettingsTab
     let onClose: () -> Void
+    @EnvironmentObject private var themeStore: SettingsThemeStore
     @State private var tab: SettingsTab
 
     init(initialTab: SettingsTab = .general, onClose: @escaping () -> Void) {
@@ -212,9 +195,9 @@ private struct SystemSettingsContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5)
+                .strokeBorder(themeStore.palette.windowBorder, lineWidth: 0.5)
         )
-        .shadow(color: .black.opacity(0.5), radius: 30, y: 12)
+        .shadow(color: themeStore.palette.windowShadow, radius: 30, y: 12)
     }
 
     // MARK: Sidebar
@@ -225,10 +208,10 @@ private struct SystemSettingsContentView: View {
             HStack(spacing: 6) {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 13))
-                    .foregroundColor(Theme.sidebarText.opacity(0.75))
+                    .foregroundColor(themeStore.palette.sidebarText.opacity(0.75))
                 Text(L10n.systemSettings)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Theme.sidebarText.opacity(0.9))
+                    .foregroundColor(themeStore.palette.sidebarText.opacity(0.9))
             }
             .padding(.horizontal, 14)
             .padding(.top, 18)
@@ -241,6 +224,15 @@ private struct SystemSettingsContentView: View {
 
             Spacer()
 
+            // Plugin-provided sidebar illustration (renders nothing when
+            // no theme with illustrations is active).
+            GIFCyclerView(illustrations: themeStore.palette.illustrations)
+                .frame(height: 140)
+                .clipped()
+                .padding(.horizontal, 12)
+                .padding(.bottom, 16)
+                .opacity(0.8)
+
             // Close button at bottom
             Button {
                 onClose()
@@ -251,7 +243,7 @@ private struct SystemSettingsContentView: View {
                     Text(L10n.back)
                         .font(.system(size: 12, weight: .medium))
                 }
-                .foregroundColor(Theme.sidebarText.opacity(0.55))
+                .foregroundColor(themeStore.palette.sidebarText.opacity(0.55))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
@@ -259,7 +251,7 @@ private struct SystemSettingsContentView: View {
             .buttonStyle(.plain)
         }
         .frame(width: 180)
-        .background(Theme.sidebarFill)
+        .background(themeStore.palette.sidebarFill)
     }
 
     @ViewBuilder
@@ -269,24 +261,62 @@ private struct SystemSettingsContentView: View {
             withAnimation(.easeOut(duration: 0.15)) { tab = t }
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: t.icon)
+                tabIcon(for: t)
                     .font(.system(size: 12))
                     .frame(width: 18)
                 Text(t.label)
                     .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
                 Spacer(minLength: 0)
             }
-            .foregroundColor(isSelected ? Theme.sidebarSelectedText : Theme.sidebarText.opacity(0.78))
+            .foregroundColor(
+                isSelected
+                    ? themeStore.palette.sidebarSelectedText
+                    : themeStore.palette.sidebarText.opacity(0.78)
+            )
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Theme.sidebarSelected : Color.clear)
+                    .fill(isSelected ? themeStore.palette.sidebarSelected : Color.clear)
             )
             .padding(.horizontal, 8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func tabIcon(for tab: SettingsTab) -> some View {
+        switch themeStore.palette.icons?.ref(for: tab) {
+        case .sfSymbol(let name)?:
+            Image(systemName: name)
+        case .image(let url)?:
+            if let nsImage = Self.nsImage(at: url) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                Image(systemName: tab.icon)
+            }
+        case nil:
+            Image(systemName: tab.icon)
+        }
+    }
+
+    /// Thread-safe in-memory cache of decoded PNG icons from plugin bundles.
+    /// Failed loads are cached as `nil` so we don't retry every render pass.
+    private static let imageCacheQueue = DispatchQueue(
+        label: "SettingsThemePalette.imageCache"
+    )
+    private static var imageCache: [URL: NSImage?] = [:]
+
+    private static func nsImage(at url: URL) -> NSImage? {
+        imageCacheQueue.sync {
+            if let cached = imageCache[url] { return cached }
+            let image = NSImage(contentsOf: url)
+            imageCache[url] = image
+            return image
+        }
     }
 
     // MARK: Detail
@@ -297,7 +327,7 @@ private struct SystemSettingsContentView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text(tab.label)
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Theme.detailText.opacity(0.95))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.95))
                     .padding(.top, 18)
 
                 switch tab {
@@ -317,7 +347,7 @@ private struct SystemSettingsContentView: View {
             .padding(.bottom, 22)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.detailFill)
+        .background(themeStore.palette.detailFill)
     }
 }
 
@@ -327,6 +357,7 @@ private struct SystemSettingsContentView: View {
 /// Dark theme: translucent white fill over the detail panel, thin border.
 private struct SettingsCard<Content: View>: View {
     let title: String?
+    @EnvironmentObject private var themeStore: SettingsThemeStore
     @ViewBuilder let content: Content
 
     init(title: String? = nil, @ViewBuilder content: () -> Content) {
@@ -341,7 +372,7 @@ private struct SettingsCard<Content: View>: View {
                     .font(.system(size: 10, weight: .semibold))
                     .textCase(.uppercase)
                     .tracking(0.6)
-                    .foregroundColor(Theme.subtle)
+                    .foregroundColor(themeStore.palette.subtle)
             }
             VStack(alignment: .leading, spacing: 8) {
                 content
@@ -350,10 +381,10 @@ private struct SettingsCard<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Theme.cardFill)
+                    .fill(themeStore.palette.cardFill)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(Theme.cardBorder, lineWidth: 0.5)
+                            .strokeBorder(themeStore.palette.cardBorder, lineWidth: 0.5)
                     )
             )
         }
@@ -366,31 +397,35 @@ private struct TabToggle: View {
     let label: String
     let isOn: Bool
     let action: () -> Void
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: icon)
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(isOn ? 0.9 : 0.5))
+                    .foregroundColor(themeStore.palette.detailText.opacity(isOn ? 0.9 : 0.5))
                     .frame(width: 16)
                 Text(label)
                     .font(.system(size: 12, weight: isOn ? .semibold : .medium))
-                    .foregroundColor(.white.opacity(isOn ? 0.95 : 0.7))
+                    .foregroundColor(themeStore.palette.detailText.opacity(isOn ? 0.95 : 0.7))
                 Spacer(minLength: 0)
                 Circle()
-                    .fill(isOn ? Theme.sidebarFill : Color.white.opacity(0.18))
+                    .fill(isOn ? themeStore.palette.toggleOn : themeStore.palette.toggleOff)
                     .frame(width: 7, height: 7)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 7)
-                    .fill(isOn ? Theme.sidebarFill.opacity(0.1) : Color.white.opacity(0.03))
+                    .fill(isOn ? themeStore.palette.toggleOnBg : themeStore.palette.toggleOffBg)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 7)
-                    .strokeBorder(isOn ? Theme.sidebarFill.opacity(0.25) : Color.white.opacity(0.08), lineWidth: 0.5)
+                    .strokeBorder(
+                        isOn ? themeStore.palette.toggleOnBorder : themeStore.palette.secondaryButtonBorder,
+                        lineWidth: 0.5
+                    )
             )
         }
         .buttonStyle(.plain)
@@ -403,6 +438,7 @@ private struct GeneralTab: View {
     @State private var hooksInstalled = HookInstaller.isInstalled()
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @ObservedObject private var codexGate = CodexFeatureGate.shared
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -453,27 +489,28 @@ private struct GeneralTab: View {
 /// See the explanatory Text below for exact scope.
 private struct AnthropicProxyRow: View {
     @AppStorage("anthropicProxyURL") private var proxyURL: String = ""
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             TextField(L10n.anthropicApiProxyPlaceholder, text: $proxyURL)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12, design: .monospaced))
-                .foregroundColor(.white.opacity(0.95))
+                .foregroundColor(themeStore.palette.detailText.opacity(0.95))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 7)
-                        .fill(Color.white.opacity(0.05))
+                        .fill(themeStore.palette.secondaryButtonFill)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 7)
-                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                        .strokeBorder(themeStore.palette.secondaryButtonBorder.opacity(1.5), lineWidth: 0.5)
                 )
 
             Text(L10n.anthropicApiProxyDescription)
                 .font(.system(size: 10))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(themeStore.palette.subtle)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -485,9 +522,14 @@ private struct AppearanceTab: View {
     @ObservedObject private var screenSelector = ScreenSelector.shared
     @AppStorage("showGroupedSessions") private var showGrouped: Bool = false
     @AppStorage("usePixelCat") private var usePixelCat: Bool = false
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            SettingsCard(title: "Theme") {
+                ThemePickerCard()
+            }
+
             SettingsCard(title: L10n.screen) {
                 ScreenPickerRow(screenSelector: screenSelector)
             }
@@ -508,11 +550,156 @@ private struct AppearanceTab: View {
     }
 }
 
+// MARK: - Theme picker (inside AppearanceTab)
+// Matches the ScreenPickerRow expand/collapse pattern: a header row with
+// the current selection + chevron, and an expanded list of options.
+
+private struct ThemePickerCard: View {
+    @EnvironmentObject private var themeStore: SettingsThemeStore
+    @ObservedObject private var pluginManager = NativePluginManager.shared
+
+    @State private var isExpanded = false
+    @State private var isHovered = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "paintpalette")
+                        .font(.system(size: 12))
+                        .foregroundColor(textColor)
+                        .frame(width: 16)
+
+                    Text("Theme")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(textColor)
+
+                    Spacer()
+
+                    Text(currentSelectionLabel)
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.4))
+                        .lineLimit(1)
+
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(isHovered ? Color.white.opacity(0.08) : Color.clear)
+                )
+            }
+            .buttonStyle(.plain)
+            .onHover { isHovered = $0 }
+
+            if isExpanded {
+                VStack(spacing: 2) {
+                    ThemeOptionRow(
+                        label: "Default",
+                        isSelected: themeStore.activeThemeId == nil
+                    ) {
+                        themeStore.reset()
+                        collapseAfterDelay()
+                    }
+
+                    ForEach(sortedThemeIds, id: \.self) { id in
+                        ThemeOptionRow(
+                            label: pluginName(for: id) ?? id,
+                            isSelected: themeStore.activeThemeId == id
+                        ) {
+                            guard let entry = pluginManager.settingsThemeConfigs[id] else { return }
+                            themeStore.activate(
+                                id: id,
+                                config: entry.config,
+                                bundleResourcesURL: entry.resourcesURL
+                            )
+                            collapseAfterDelay()
+                        }
+                    }
+                }
+                .padding(.leading, 28)
+                .padding(.top, 4)
+            }
+        }
+    }
+
+    private var currentSelectionLabel: String {
+        guard let id = themeStore.activeThemeId else { return "Default" }
+        return pluginName(for: id) ?? id
+    }
+
+    private var textColor: Color {
+        .white.opacity(isHovered ? 1.0 : 0.7)
+    }
+
+    private var sortedThemeIds: [String] {
+        pluginManager.settingsThemeConfigs.keys.sorted()
+    }
+
+    private func pluginName(for id: String) -> String? {
+        pluginManager.loadedPlugins.first(where: { $0.id == id })?.name
+    }
+
+    private func collapseAfterDelay() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isExpanded = false
+            }
+        }
+    }
+}
+
+private struct ThemeOptionRow: View {
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(isSelected ? TerminalColors.green : Color.white.opacity(0.2))
+                    .frame(width: 6, height: 6)
+
+                Text(label)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(isHovered ? 1.0 : 0.7))
+
+                Spacer()
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(TerminalColors.green)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isHovered ? Color.white.opacity(0.06) : Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
 // MARK: - Notifications tab
 
 private struct NotificationsTab: View {
     @ObservedObject private var soundSelector = SoundSelector.shared
     @AppStorage("usageWarningThreshold") private var usageWarningThreshold: Int = 90
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -532,6 +719,7 @@ private struct BehaviorTab: View {
     @AppStorage("smartSuppression") private var smartSuppression: Bool = true
     @AppStorage("autoCollapseOnMouseLeave") private var autoCollapseOnMouseLeave: Bool = true
     @AppStorage("compactCollapsed") private var compactCollapsed: Bool = false
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -550,6 +738,7 @@ private struct BehaviorTab: View {
 
 private struct CodeLightTab: View {
     @ObservedObject private var syncManager = SyncManager.shared
+    @EnvironmentObject private var themeStore: SettingsThemeStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -560,8 +749,8 @@ private struct CodeLightTab: View {
                           : "iphone.slash")
                         .font(.system(size: 14))
                         .foregroundColor(syncManager.isEnabled
-                                         ? Theme.sidebarFill
-                                         : Color.white.opacity(0.4))
+                                         ? themeStore.palette.accent
+                                         : themeStore.palette.detailText.opacity(0.4))
                         .frame(width: 18)
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -569,16 +758,16 @@ private struct CodeLightTab: View {
                            !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             Text(URL(string: url)?.host ?? url)
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white.opacity(0.9))
+                                .foregroundColor(themeStore.palette.detailText.opacity(0.9))
                             Text(syncManager.isEnabled
                                  ? (L10n.isChinese ? "在线" : "Online")
                                  : (L10n.isChinese ? "未连接" : "Not connected"))
                                 .font(.system(size: 10))
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundColor(themeStore.palette.subtle)
                         } else {
                             Text(L10n.isChinese ? "尚未配置服务器" : "No server configured")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(themeStore.palette.detailText.opacity(0.7))
                         }
                     }
 
@@ -593,12 +782,12 @@ private struct CodeLightTab: View {
                             Text(L10n.pairNewPhone)
                                 .font(.system(size: 11, weight: .semibold))
                         }
-                        .foregroundColor(.black)
+                        .foregroundColor(themeStore.palette.accentText)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
                         .background(
                             RoundedRectangle(cornerRadius: 7)
-                                .fill(Theme.sidebarFill)
+                                .fill(themeStore.palette.accent)
                         )
                     }
                     .buttonStyle(.plain)
@@ -606,7 +795,7 @@ private struct CodeLightTab: View {
             }
 
             SettingsCard(title: L10n.launchPresetsSection) {
-                PresetsListContent(textStyle: .darkOnLight(false))
+                PresetsListContent()
                     .frame(minHeight: 280)
             }
         }
@@ -616,6 +805,8 @@ private struct CodeLightTab: View {
 // MARK: - Advanced tab
 
 private struct AdvancedTab: View {
+    @EnvironmentObject private var themeStore: SettingsThemeStore
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             SettingsCard(title: L10n.clearEndedSessions) {
@@ -629,15 +820,15 @@ private struct AdvancedTab: View {
                             .font(.system(size: 12, weight: .medium))
                         Spacer()
                     }
-                    .foregroundColor(Theme.detailText.opacity(0.85))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.85))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 9)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.white.opacity(0.06))
+                            .fill(themeStore.palette.secondaryButtonFill)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .strokeBorder(Theme.cardBorder, lineWidth: 0.5)
+                                    .strokeBorder(themeStore.palette.secondaryButtonBorder, lineWidth: 0.5)
                             )
                     )
                 }
@@ -650,6 +841,8 @@ private struct AdvancedTab: View {
 // MARK: - About tab
 
 private struct AboutTab: View {
+    @EnvironmentObject private var themeStore: SettingsThemeStore
+
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
@@ -662,11 +855,11 @@ private struct AboutTab: View {
                 HStack {
                     Text(L10n.version)
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Theme.detailText.opacity(0.9))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.9))
                     Spacer()
                     Text(version)
                         .font(.system(size: 12, design: .monospaced))
-                        .foregroundColor(Theme.detailText.opacity(0.6))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.85))
                 }
             }
 
@@ -693,14 +886,14 @@ private struct AboutTab: View {
                 HStack(spacing: 10) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 16))
-                        .foregroundColor(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255))
+                        .foregroundColor(themeStore.palette.accent)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L10n.pluginMarketplaceTitle)
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Theme.detailText.opacity(0.9))
+                            .foregroundColor(themeStore.palette.detailText.opacity(0.9))
                         Text(L10n.pluginMarketplaceDesc)
                             .font(.system(size: 10))
-                            .foregroundColor(Theme.detailText.opacity(0.55))
+                            .foregroundColor(themeStore.palette.detailText.opacity(0.55))
                             .lineLimit(2)
                     }
                     Spacer()
@@ -713,12 +906,12 @@ private struct AboutTab: View {
                             Image(systemName: "arrow.up.right")
                                 .font(.system(size: 9, weight: .bold))
                         }
-                        .foregroundColor(.black)
+                        .foregroundColor(themeStore.palette.accentText)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
-                                .fill(Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255))
+                                .fill(themeStore.palette.accent)
                         )
                     }
                     .buttonStyle(.plain)
@@ -729,21 +922,21 @@ private struct AboutTab: View {
                 HStack {
                     Image(systemName: "message.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(Theme.detailText.opacity(0.6))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.55))
                     Text(L10n.wechatLabel)
                         .font(.system(size: 12))
-                        .foregroundColor(Theme.detailText.opacity(0.8))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.8))
                     Spacer()
                     Text("A115939")
                         .font(.system(size: 12, design: .monospaced))
-                        .foregroundColor(Theme.detailText.opacity(0.55))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.55))
                         .textSelection(.enabled)
                 }
             }
 
             Text(L10n.maintainedTagline)
                 .font(.system(size: 11))
-                .foregroundColor(Theme.detailText.opacity(0.5))
+                .foregroundColor(themeStore.palette.detailText.opacity(0.5))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 4)
         }
@@ -756,12 +949,12 @@ private struct AboutTab: View {
             Text(label)
                 .font(.system(size: 12, weight: .semibold))
         }
-        .foregroundColor(.black)
+        .foregroundColor(themeStore.palette.accentText)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(Theme.sidebarFill)
+                .fill(themeStore.palette.accent)
         )
     }
 }
@@ -771,6 +964,7 @@ private struct AboutTab: View {
 /// Phone → terminal relay diagnostics. Replaces the invisible failure modes
 /// that used to leave users with "phone says sent, cmux shows nothing".
 private struct CmuxConnectionTab: View {
+    @EnvironmentObject private var themeStore: SettingsThemeStore
     @State private var probe: TerminalWriter.ConnectionProbe?
     @State private var isRefreshing = false
     @State private var testState: TestState = .idle
@@ -785,7 +979,7 @@ private struct CmuxConnectionTab: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(L10n.cmuxTabHeader)
                 .font(.system(size: 11))
-                .foregroundColor(Theme.subtle)
+                .foregroundColor(themeStore.palette.subtle)
 
             SettingsCard {
                 statusRow(
@@ -829,10 +1023,10 @@ private struct CmuxConnectionTab: View {
                                 Text(testState == .sending ? L10n.testSending : L10n.testSendButton)
                                     .font(.system(size: 12, weight: .semibold))
                             }
-                            .foregroundColor(.black)
+                            .foregroundColor(themeStore.palette.accentText)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(Theme.sidebarFill))
+                            .background(RoundedRectangle(cornerRadius: 8).fill(themeStore.palette.accent))
                         }
                         .buttonStyle(.plain)
                         .disabled(testState == .sending)
@@ -844,10 +1038,10 @@ private struct CmuxConnectionTab: View {
                                 Image(systemName: "arrow.clockwise").font(.system(size: 11))
                                 Text(L10n.refreshStatus).font(.system(size: 12, weight: .medium))
                             }
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundColor(themeStore.palette.detailText.opacity(0.85))
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)))
+                            .background(RoundedRectangle(cornerRadius: 8).fill(themeStore.palette.secondaryButtonFill))
                         }
                         .buttonStyle(.plain)
                         .disabled(isRefreshing)
@@ -856,7 +1050,7 @@ private struct CmuxConnectionTab: View {
                     if testState == .done, !testDetail.isEmpty {
                         Text(testDetail)
                             .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundColor(themeStore.palette.detailText.opacity(0.75))
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -884,11 +1078,14 @@ private struct CmuxConnectionTab: View {
                             Spacer()
                             Image(systemName: "chevron.right").font(.system(size: 9)).opacity(0.4)
                         }
-                        .foregroundColor(.white.opacity(0.85))
+                        .foregroundColor(themeStore.palette.detailText.opacity(0.85))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
-                        .background(RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.04)))
-                        .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5))
+                        .background(RoundedRectangle(cornerRadius: 7).fill(themeStore.palette.secondaryButtonFill))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 7)
+                                .strokeBorder(themeStore.palette.secondaryButtonBorder, lineWidth: 0.5)
+                        )
                     }
                     .buttonStyle(.plain)
                     .disabled(automationState == .requesting)
@@ -896,7 +1093,7 @@ private struct CmuxConnectionTab: View {
                     if automationState == .done, !automationDetail.isEmpty {
                         Text(automationDetail)
                             .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(themeStore.palette.detailText.opacity(0.6))
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -918,15 +1115,15 @@ private struct CmuxConnectionTab: View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(themeStore.palette.detailText.opacity(0.7))
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.9))
                 Text(detail)
                     .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundColor(themeStore.palette.detailText.opacity(0.55))
             }
             Spacer()
             Circle()
@@ -938,9 +1135,9 @@ private struct CmuxConnectionTab: View {
 
     private func dotColor(_ ok: Bool?) -> Color {
         switch ok {
-        case .some(true): return Color(red: 0.3, green: 0.85, blue: 0.35)
-        case .some(false): return Color(red: 0.95, green: 0.35, blue: 0.35)
-        case .none: return Color.white.opacity(0.25)
+        case .some(true): return themeStore.palette.statusOk
+        case .some(false): return themeStore.palette.statusError
+        case .none: return themeStore.palette.statusUnknown
         }
     }
 
@@ -956,11 +1153,14 @@ private struct CmuxConnectionTab: View {
                 Spacer()
                 Image(systemName: "chevron.right").font(.system(size: 9)).opacity(0.4)
             }
-            .foregroundColor(.white.opacity(0.85))
+            .foregroundColor(themeStore.palette.detailText.opacity(0.85))
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.04)))
-            .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5))
+            .background(RoundedRectangle(cornerRadius: 7).fill(themeStore.palette.secondaryButtonFill))
+            .overlay(
+                RoundedRectangle(cornerRadius: 7)
+                    .strokeBorder(themeStore.palette.secondaryButtonBorder, lineWidth: 0.5)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -991,6 +1191,7 @@ private struct CmuxConnectionTab: View {
 /// Exists to turn "CodeIsland is broken, help" into something users can
 /// self-serve into a GitHub issue without scrolling for log files.
 private struct LogsTab: View {
+    @EnvironmentObject private var themeStore: SettingsThemeStore
     @StateObject private var streamer = LogStreamer.shared
     @State private var justCopied = false
 
@@ -998,7 +1199,7 @@ private struct LogsTab: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(L10n.logsHeader)
                 .font(.system(size: 11))
-                .foregroundColor(Theme.subtle)
+                .foregroundColor(themeStore.palette.subtle)
 
             HStack(spacing: 8) {
                 toolbarButton(icon: "doc.on.doc", label: justCopied ? L10n.logsCopied : L10n.logsCopyAll) {
@@ -1035,7 +1236,7 @@ private struct LogsTab: View {
         if streamer.lines.isEmpty {
             Text(L10n.logsEmpty)
                 .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(themeStore.palette.detailText.opacity(0.4))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 24)
         } else {
@@ -1070,12 +1271,12 @@ private struct LogsTab: View {
     private func colorFor(line: String) -> Color {
         let lower = line.lowercased()
         if lower.contains("error") || lower.contains("failed") {
-            return Color(red: 1.0, green: 0.55, blue: 0.55)
+            return themeStore.palette.logError
         }
         if lower.contains("warning") || lower.contains("timeout") {
-            return Color(red: 1.0, green: 0.85, blue: 0.4)
+            return themeStore.palette.logWarning
         }
-        return Color.white.opacity(0.8)
+        return themeStore.palette.logDefault
     }
 
     private func toolbarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
@@ -1084,11 +1285,14 @@ private struct LogsTab: View {
                 Image(systemName: icon).font(.system(size: 11))
                 Text(label).font(.system(size: 12, weight: .medium))
             }
-            .foregroundColor(.white.opacity(0.85))
+            .foregroundColor(themeStore.palette.detailText.opacity(0.85))
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
-            .background(RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.06)))
-            .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5))
+            .background(RoundedRectangle(cornerRadius: 7).fill(themeStore.palette.secondaryButtonFill))
+            .overlay(
+                RoundedRectangle(cornerRadius: 7)
+                    .strokeBorder(themeStore.palette.secondaryButtonBorder, lineWidth: 0.5)
+            )
         }
         .buttonStyle(.plain)
     }
