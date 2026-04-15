@@ -920,7 +920,8 @@ final class TerminalWriter {
                   line == "\(pid)" else { continue }
 
             // Prefer cwd from the JSON; fall back to lsof if absent
-            let cwd = (json["cwd"] as? String) ?? await lsofCwd(pid: pid)
+            let cwd: String
+            if let c = json["cwd"] as? String { cwd = c } else { cwd = await lsofCwd(pid: pid) ?? "" }
             processes.append(ClaudeProcessInfo(pid: pid, sessionId: sessionId, cwd: cwd))
         }
         return processes
