@@ -132,7 +132,7 @@ MioIsland 现在自带**插件系统**，配套的插件市场托管在 **[miomi
 ### Homebrew（推荐）
 
 ```bash
-brew install --cask xmqywx/codeisland/codeisland
+brew install xmqywx/codeisland/codeisland
 ```
 
 cask 会自动处理 Gatekeeper,装完直接双击打开即可。
@@ -209,7 +209,7 @@ xcodebuild -project ClaudeIsland.xcodeproj -scheme ClaudeIsland \
 
 - **邮箱** xmqywx@gmail.com
 
-<img src="docs/wechat-qr-kris.jpg" width="140" alt="微信 - Kris" />  <img src="docs/wechat-qr.jpg" width="140" alt="微信 - Carey" />
+<img src="docs/wechat-qr-kris.jpg" width="140" alt="微信 - Kris" />  <img src="docs/wechat-qr.jpg" width="140" alt="微信 - Carey" />  <img src="docs/wechat-group-qr.jpg" width="140" alt="MioIsland 用户群" />
 
 ---
 

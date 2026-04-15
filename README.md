@@ -333,7 +333,7 @@ MioIsland auto-detects your terminal from the process tree:
 ### Homebrew (recommended)
 
 ```bash
-brew install --cask xmqywx/codeisland/codeisland
+brew install xmqywx/codeisland/codeisland
 ```
 
 The cask handles Gatekeeper automatically — you can launch the app with a normal double-click right after install.
@@ -410,7 +410,7 @@ Have questions or want to chat? Reach out!
 
 - **Email / 邮箱**: xmqywx@gmail.com
 
-<img src="docs/wechat-qr-kris.jpg" width="180" alt="WeChat - Kris" />  <img src="docs/wechat-qr.jpg" width="180" alt="WeChat - Carey" />
+<img src="docs/wechat-qr-kris.jpg" width="180" alt="WeChat - Kris" />  <img src="docs/wechat-qr.jpg" width="180" alt="WeChat - Carey" />  <img src="docs/wechat-group-qr.jpg" width="180" alt="MioIsland 用户群" />
 
 ## Credits
 
