@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Mio Island Updates</title>
+    <link>https://miomio.chat/appcast.xml</link>
+    <description>Mio Island update feed</description>
+    <language>en</language>
+    <item>
+      <title>Mio Island 2.0.9</title>
+      <pubDate>Tue, 15 Apr 2026 14:00:00 +0800</pubDate>
+      <sparkle:version>2.0.9</sparkle:version>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/MioMioOS/MioIsland/releases/download/v2.0.9/MioIsland-v2.0.9.dmg"
+        length="0"
+        type="application/octet-stream"
+        sparkle:edSignature=""
+      />
+    </item>
+  </channel>
+</rss>
