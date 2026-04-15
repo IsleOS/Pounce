@@ -1,5 +1,5 @@
 #!/bin/bash
-# CodeIsland Release Script
+# MioIsland Release Script
 # Usage: ./scripts/release.sh v2.0.2
 #
 # Ships unsigned builds. Users must right-click → Open or run
@@ -14,10 +14,10 @@ set -e
 VERSION="${1:?Usage: $0 <version>}"
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$HOME/Library/Developer/Xcode/DerivedData/ClaudeIsland-guzapwxyhrxjvgdvqogvkpjqjwht/Build/Products/Release"
-APP_PATH="$BUILD_DIR/Code Island.app"
-ZIP_PATH="$PROJECT_DIR/CodeIsland-${VERSION}.zip"
+APP_PATH="$BUILD_DIR/Mio Island.app"
+ZIP_PATH="$PROJECT_DIR/MioIsland-${VERSION}.zip"
 
-echo "=== CodeIsland Release $VERSION (unsigned) ==="
+echo "=== MioIsland Release $VERSION (unsigned) ==="
 
 # 1. Update version in Xcode project
 CLEAN_VERSION="${VERSION#v}"  # v2.0.2 -> 2.0.2
@@ -29,7 +29,7 @@ sed -i '' "s/MARKETING_VERSION = [0-9.]*/MARKETING_VERSION = $CLEAN_VERSION/g" \
 #
 # ARCHS + ONLY_ACTIVE_ARCH are critical: xcodebuild defaults to building
 # only the current machine's architecture, which would ship an arm64-only
-# binary to Intel Mac users — who then see "Code Island can't be opened"
+# binary to Intel Mac users — who then see "Mio Island can't be opened"
 # with no recoverable error (xattr won't help, it's a pure architecture
 # mismatch). Force a universal build so the same zip works on both archs.
 echo ">>> Building Release (unsigned, universal arm64+x86_64)..."

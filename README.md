@@ -256,7 +256,7 @@ Add, edit, or remove your own presets from the **Launch Presets** menu in the no
 
 Phone-attached images come down as opaque blob IDs (uploaded by the phone via `POST /v1/blobs`). MioIsland downloads each blob, focuses the target cmux pane, writes the image to `NSPasteboard` in NSImage / `public.jpeg` / `.tiff` formats, then `System Events keystroke "v" using {command down}` (with a `CGEvent` fallback). Claude sees `[Image #N]` and the trailing text as a single message.
 
-This requires **Accessibility permission** — and because permissions are tracked by the app's signed path, MioIsland auto-installs a copy of itself to `/Applications/Code Island.app` so the grant survives Debug rebuilds.
+This requires **Accessibility permission** — and because permissions are tracked by the app's signed path, MioIsland auto-installs a copy of itself to `/Applications/Mio Island.app` so the grant survives Debug rebuilds.
 
 #### Project path sync
 
@@ -340,12 +340,12 @@ The cask handles Gatekeeper automatically — you can launch the app with a norm
 
 ### Manual download
 
-Grab the latest `.zip` from [Releases](https://github.com/MioMioOS/MioIsland/releases), unzip, and drag `Code Island.app` to `/Applications`.
+Grab the latest `.zip` from [Releases](https://github.com/MioMioOS/MioIsland/releases), unzip, and drag `Mio Island.app` to `/Applications`.
 
-CodeIsland ships **unsigned**, so macOS Gatekeeper will block the first launch. Do **one** of the following:
+MioIsland ships **unsigned**, so macOS Gatekeeper will block the first launch. Do **one** of the following:
 
-- **Right-click** `Code Island.app` → **Open** → click **Open** in the dialog, **or**
-- Run once in Terminal: `xattr -dr com.apple.quarantine "/Applications/Code Island.app"`
+- **Right-click** `Mio Island.app` → **Open** → click **Open** in the dialog, **or**
+- Run once in Terminal: `xattr -dr com.apple.quarantine "/Applications/Mio Island.app"`
 
 Subsequent launches work normally with a double-click.
 
@@ -356,15 +356,15 @@ Subsequent launches work normally with a double-click.
 
 ### HTTP Proxy (for network-restricted regions)
 
-`Settings → General → Anthropic API Proxy` lets you route Code Island's Anthropic API traffic through a local HTTP proxy (e.g. `http://127.0.0.1:7890`). Useful if you run Clash / V2Ray / similar locally and direct connections to Anthropic's servers are unreliable.
+`Settings → General → Anthropic API Proxy` lets you route Mio Island's Anthropic API traffic through a local HTTP proxy (e.g. `http://127.0.0.1:7890`). Useful if you run Clash / V2Ray / similar locally and direct connections to Anthropic's servers are unreliable.
 
 **Scope — the setting is applied to:**
 - ✅ The rate-limit bar in the notch (`RateLimitMonitor` → `api.anthropic.com/api/oauth/usage`)
-- ✅ **Every subprocess CodeIsland spawns**, including the Stats plugin's `claude` CLI and any future plugin's shell-outs. Code Island calls `setenv()` on its own process environment at startup, so children inherit `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` automatically — no per-plugin opt-in needed.
+- ✅ **Every subprocess MioIsland spawns**, including the Stats plugin's `claude` CLI and any future plugin's shell-outs. Mio Island calls `setenv()` on its own process environment at startup, so children inherit `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` automatically — no per-plugin opt-in needed.
 - ❌ **Not** applied to CodeLight iPhone sync (our own server `island.wdao.chat` — direct is faster, routing through a user proxy would add latency and a failure point).
 - ❌ **Not** applied to third-party plugins that use their own `URLSession` to reach external APIs. Those honor your system proxy settings (System Preferences → Network → Proxies), not this field.
 
-You do **not** need to run `launchctl setenv HTTPS_PROXY ...` — setting the proxy in Settings is scoped to CodeIsland and sufficient. Leave the field empty for direct connections.
+You do **not** need to run `launchctl setenv HTTPS_PROXY ...` — setting the proxy in Settings is scoped to MioIsland and sufficient. Leave the field empty for direct connections.
 
 <details>
 <summary><b>Build from Source</b></summary>
