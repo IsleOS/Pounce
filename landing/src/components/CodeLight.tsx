@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Smartphone, Download, Zap, ShieldCheck, Terminal, Camera, Link, Lock, MessageCircle, Users } from "lucide-react"
+import { Smartphone, Download, Zap, ShieldCheck, Terminal, Camera, Lock, Users } from "lucide-react"
 import { useI18n } from "../lib/i18n"
 import SpotlightCard from "./reactbits/SpotlightCard"
 import TiltedCard from "./reactbits/TiltedCard"
