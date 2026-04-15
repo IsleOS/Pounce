@@ -3,7 +3,7 @@ import { Plus, Minus } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { useI18n } from "../lib/i18n"
 
-const faqKeys = [1, 2, 3, 4, 5, 6, 7] as const
+const faqKeys = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const
 
 export default function FAQ() {
   const { t } = useI18n()
@@ -15,7 +15,7 @@ export default function FAQ() {
 
   return (
     <section id="faq" className="relative z-20 bg-deep py-20 sm:py-32 px-4 sm:px-6 noise">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(124,58,237,0.06)_0%,transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(52,211,153,0.04)_0%,transparent_60%)]" />
       <div className="max-w-3xl mx-auto relative z-10">
         {/* Header */}
         <div style={{ animation: "heroEnter 0.8s ease-out both" }} className="text-center mb-12 sm:mb-20">
@@ -31,7 +31,7 @@ export default function FAQ() {
               <div
                 key={num}
                 style={{ animation: `heroEnter 0.6s ease-out ${i * 0.08}s both` }}
-                className="glass rounded-2xl transition-all duration-500 hover:shadow-[0_20px_60px_rgba(124,58,237,0.08)]"
+                className="glass rounded-2xl transition-all duration-500 hover:shadow-[0_20px_60px_rgba(52,211,153,0.08)]"
               >
                 <button
                   onClick={() => toggle(num)}

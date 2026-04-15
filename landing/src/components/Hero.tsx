@@ -8,6 +8,7 @@ import logo from "../lib/logo"
 import BlurText from "./reactbits/BlurText"
 import ShinyText from "./reactbits/ShinyText"
 import StarBorder from "./reactbits/StarBorder"
+import LightRays from "./reactbits/LightRays"
 
 const GithubIcon = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -22,6 +23,23 @@ export default function Hero() {
   return (
     <>
       <div className="w-full bg-deep relative z-10 isolate">
+        {/* LightRays background */}
+        <div className="absolute inset-0 z-0 opacity-50">
+          <LightRays
+            raysOrigin="top-center"
+            raysColor="#ffffff"
+            raysSpeed={0.6}
+            lightSpread={1.5}
+            rayLength={2.5}
+            fadeDistance={1.0}
+            saturation={0.3}
+            followMouse={true}
+            mouseInfluence={0.05}
+            noiseAmount={0.02}
+            distortion={0.08}
+          />
+        </div>
+
         <MacbookScroll
           title={
             <div className="flex flex-col items-center gap-6">
@@ -63,7 +81,7 @@ export default function Hero() {
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-center px-4 sm:px-0" style={{ animation: 'heroEnter 1s ease-out 0.8s both' }}>
                 <StarBorder
                   as="a"
-                  href="https://github.com/MioMioOS/MioIsland/releases/download/v2.0.1/MioIsland-v2.0.1.dmg"
+                  href="https://github.com/MioMioOS/MioIsland/releases/download/v2.0.8/MioIsland-v2.0.8.dmg"
                   color="#34d399"
                   speed="4s"
                   className="!rounded-xl"
@@ -74,8 +92,8 @@ export default function Hero() {
                   onClick={() => setCommunityOpen(true)}
                   className="group flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl font-mono text-sm text-text-primary transition-all duration-300 hover:scale-[1.03] cursor-pointer"
                   style={{
-                    background: "linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(52,211,153,0.15) 100%)",
-                    border: "1px solid rgba(124,58,237,0.3)",
+                    background: "rgba(52,211,153,0.08)",
+                    border: "1px solid rgba(52,211,153,0.25)",
                   }}
                 >
                   <Users size={16} />
@@ -83,7 +101,7 @@ export default function Hero() {
                 </button>
                 <a
                   href="https://github.com/MioMioOS/MioIsland"
-                  className="group flex items-center justify-center gap-2.5 glass px-8 py-3.5 rounded-xl font-mono text-sm text-purple-pale transition-all duration-300 hover:scale-[1.03] hover:text-text-primary"
+                  className="group flex items-center justify-center gap-2.5 glass px-8 py-3.5 rounded-xl font-mono text-sm text-green-bright transition-all duration-300 hover:scale-[1.03] hover:text-text-primary"
                 >
                   <GithubIcon size={16} />
                   {t("hero.star")}

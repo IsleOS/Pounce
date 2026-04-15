@@ -27,14 +27,14 @@ export default function HowItWorks() {
       Icon: Smartphone,
       titleKey: "how.step2.title",
       descKey: "how.step2.desc",
-      color: "#a78bfa",
+      color: "#34d399",
     },
     {
       num: "03",
       Icon: Link2,
       titleKey: "how.step3.title",
       descKey: "how.step3.desc",
-      color: "#fbbf24",
+      color: "#34d399",
     },
   ]
 

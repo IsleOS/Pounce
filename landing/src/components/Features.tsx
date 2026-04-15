@@ -19,7 +19,7 @@ export default function Features() {
 
   return (
     <section id="features" className="relative z-20 bg-deep py-20 sm:py-32 px-4 sm:px-6 noise">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(124,58,237,0.06)_0%,transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(52,211,153,0.04)_0%,transparent_60%)]" />
       <div className="max-w-6xl mx-auto relative z-10">
         <div style={{ animation: 'heroEnter 0.8s ease-out both' }} className="text-center mb-12 sm:mb-20">
           <span className="font-mono text-xs text-green uppercase tracking-[0.3em]">{t("features.tag")}</span>
@@ -37,7 +37,7 @@ export default function Features() {
                   <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-green/10 border border-green/15 flex items-center justify-center">
                     <f.Icon size={18} className="text-green" />
                   </div>
-                  <pre className="font-mono text-[9px] sm:text-[10px] leading-tight text-purple-light/30 group-hover:text-green/40 transition-colors duration-500 text-right">{f.ascii}</pre>
+                  <pre className="font-mono text-[9px] sm:text-[10px] leading-tight text-green/40 group-hover:text-green/70 transition-colors duration-500 text-right">{f.ascii}</pre>
                 </div>
                 <h3 className="font-display text-base sm:text-lg font-bold text-text-primary group-hover:text-green transition-colors duration-300">{t(f.titleKey as any)}</h3>
                 <p className="text-xs sm:text-sm text-text-muted mt-2 leading-relaxed">{t(f.descKey as any)}</p>

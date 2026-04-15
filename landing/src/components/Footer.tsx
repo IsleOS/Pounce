@@ -21,17 +21,17 @@ export default function Footer() {
     <footer className="relative z-20 bg-deep pt-8 sm:pt-10 pb-24 sm:pb-28 px-4 sm:px-6 border-t border-white/[0.04]">
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
         <a href="#" className="flex items-center gap-2">
-          <img src={logo} alt="MioIsland" className="w-5 h-5 rounded" />
-          <span className="font-mono text-xs font-bold text-text-muted tracking-[0.15em]">MIOISLAND</span>
+          <img src={logo} alt="MioIsland" className="w-6 h-6 rounded" />
+          <span className="font-mono text-sm font-bold text-text-muted tracking-[0.15em]">MIOISLAND</span>
           <span className="text-text-muted/40 mx-1">·</span>
-          <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" className="font-mono text-xs text-text-muted/60 hover:text-text-muted transition-colors">CC BY-NC 4.0</a>
+          <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" className="font-mono text-sm text-text-muted/60 hover:text-text-muted transition-colors">CC BY-NC 4.0</a>
         </a>
         <div className="flex items-center gap-5">
-          <a href="https://github.com/MioMioOS/MioIsland" className="text-text-muted hover:text-text-primary transition-colors" aria-label="GitHub"><GithubIcon size={16} /></a>
-          <a href="https://x.com/LinkCarey81479" className="text-text-muted hover:text-text-primary transition-colors" aria-label="X"><XIcon size={16} /></a>
+          <a href="https://github.com/MioMioOS/MioIsland" className="text-text-muted hover:text-text-primary transition-colors" aria-label="GitHub"><GithubIcon size={20} /></a>
+          <a href="https://x.com/LinkCarey81479" className="text-text-muted hover:text-text-primary transition-colors" aria-label="X"><XIcon size={20} /></a>
         </div>
-        <p className="flex items-center gap-1.5 text-xs text-text-muted/60">
-          {t("footer.madeWith")} <Heart size={10} className="text-green" /> and Claude Code
+        <p className="flex items-center gap-1.5 text-sm text-text-muted/60">
+          {t("footer.madeWith")} <Heart size={12} className="text-green" /> and Claude Code
         </p>
       </div>
     </footer>

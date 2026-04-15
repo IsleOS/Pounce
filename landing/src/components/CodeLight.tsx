@@ -1,16 +1,19 @@
-import { Smartphone, Download, Zap, ShieldCheck, Terminal, Camera, Link, Lock, MessageCircle } from "lucide-react"
+import { useState } from "react"
+import { Smartphone, Download, Zap, ShieldCheck, Terminal, Camera, Link, Lock, MessageCircle, Users } from "lucide-react"
 import { useI18n } from "../lib/i18n"
 import SpotlightCard from "./reactbits/SpotlightCard"
 import TiltedCard from "./reactbits/TiltedCard"
+import CommunityModal from "./CommunityModal"
 
 const base = import.meta.env.BASE_URL
 
-const featureIcons = [Smartphone, ShieldCheck, Terminal, Zap, Camera, Link, Lock]
+const featureIcons = [Smartphone, ShieldCheck, Terminal, Zap, Camera, Lock]
 
 export default function CodeLight() {
   const { t } = useI18n()
+  const [communityOpen, setCommunityOpen] = useState(false)
 
-  const features = [1, 2, 3, 4, 5, 6, 7].map((i) => ({
+  const features = [1, 2, 3, 4, 5, 6].map((i) => ({
     Icon: featureIcons[i - 1],
     title: t(`codelight.f${i}.title` as any),
     desc: t(`codelight.f${i}.desc` as any),
@@ -28,7 +31,7 @@ export default function CodeLight() {
             <span className="font-mono text-xs text-green uppercase tracking-[0.3em]">{t("codelight.tag")}</span>
           </div>
 
-          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-text-primary">
+          <h2 className="font-mono text-3xl sm:text-5xl font-bold text-text-primary tracking-tight">
             {t("codelight.title")}
           </h2>
 
@@ -40,14 +43,24 @@ export default function CodeLight() {
             {t("codelight.desc")}
           </p>
 
-          {/* Beta badge */}
-          <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber/20 bg-amber/5">
-            <span className="w-2 h-2 rounded-full bg-amber animate-pulse" />
-            <span className="font-mono text-xs text-amber font-medium">{t("codelight.beta")}</span>
+          {/* Free access CTA — prominent, drives to community */}
+          <div className="mt-8 max-w-lg mx-auto rounded-2xl p-5 sm:p-6 border border-green/20 bg-green/[0.05]">
+            <p className="text-base sm:text-lg font-semibold text-text-primary text-center">
+              {t("codelight.freeCta")}
+            </p>
+            <p className="text-sm text-text-secondary mt-2 text-center leading-relaxed">
+              {t("codelight.freeDesc")}
+            </p>
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => setCommunityOpen(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-green text-deep transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_24px_rgba(52,211,153,0.3)] cursor-pointer"
+              >
+                <Users size={16} />
+                {t("community.join")}
+              </button>
+            </div>
           </div>
-          <p className="text-xs text-text-muted/70 mt-2 max-w-md mx-auto">
-            {t("codelight.betaDesc")}
-          </p>
         </div>
 
         {/* Showcase - tilted screenshots */}
@@ -94,35 +107,21 @@ export default function CodeLight() {
           </div>
         </div>
 
-        {/* Beta + CTA */}
+        {/* CTA */}
         <div className="text-center" style={{ animation: 'heroEnter 0.8s ease-out 0.4s both' }}>
-          <p className="text-xs text-text-muted mb-5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber/10 border border-amber/20 text-amber">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse" />
-              {t("codelight.status")}
-            </span>
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href="https://apps.apple.com/us/app/code-light/id6761744871"
-              className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-mono text-sm text-deep font-bold bg-green transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(52,211,153,0.3)]"
-            >
-              <Download size={16} />
-              {t("codelight.appstore")}
-            </a>
-          </div>
-
-          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-text-muted/60">
-            <MessageCircle size={12} />
-            <span>{t("codelight.feedbackCta")}</span>
-          </div>
-
-          <p className="text-xs text-text-muted/60 mt-3 max-w-md mx-auto">
+          <a
+            href="https://apps.apple.com/us/app/code-light/id6761744871"
+            className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-mono text-sm text-deep font-bold bg-green transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(52,211,153,0.3)]"
+          >
+            <Download size={16} />
+            {t("codelight.appstore")}
+          </a>
+          <p className="text-sm text-text-muted mt-4">
             {t("codelight.regionNote")}
           </p>
         </div>
       </div>
+      <CommunityModal open={communityOpen} onClose={() => setCommunityOpen(false)} />
     </section>
   )
 }

@@ -15,7 +15,7 @@
   --color-text-secondary: #cbd5e1;
   --color-text-muted: #64748b;
 
-  --font-display: 'Syne', sans-serif;
+  --font-display: 'Syne', system-ui, -apple-system, sans-serif;
   --font-mono: 'Space Mono', ui-monospace, monospace;
 }
 
@@ -27,7 +27,7 @@ body {
   margin: 0;
   background: #050510;
   color: #cbd5e1;
-  font-family: 'Syne', system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -45,7 +45,7 @@ body {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #050510; }
 ::-webkit-scrollbar-thumb { background: #1a1650; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
+::-webkit-scrollbar-thumb:hover { background: #34d399; }
 
 /* Noise texture overlay */
 .noise::before {
@@ -73,7 +73,7 @@ body {
 }
 .glass:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(124, 58, 237, 0.2);
+  border-color: rgba(52, 211, 153, 0.2);
 }
 
 @keyframes twinkle {

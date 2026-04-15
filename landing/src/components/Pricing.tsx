@@ -1,6 +1,6 @@
 import { Check, Monitor, Smartphone } from "lucide-react"
 import { useI18n } from "../lib/i18n"
-import GlassSurface from "./reactbits/GlassSurface"
+import SpotlightCard from "./reactbits/SpotlightCard"
 
 export default function Pricing() {
   const { t } = useI18n()
@@ -23,7 +23,7 @@ export default function Pricing() {
 
   return (
     <section id="pricing" className="relative z-20 bg-deep py-20 sm:py-32 px-4 sm:px-6 noise">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(52,211,153,0.06)_0%,transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(52,211,153,0.04)_0%,transparent_60%)]" />
       <div className="max-w-5xl mx-auto relative z-10">
         {/* Header */}
         <div style={{ animation: "heroEnter 0.8s ease-out both" }} className="text-center mb-12 sm:mb-20">
@@ -34,10 +34,13 @@ export default function Pricing() {
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {/* MioIsland Card */}
-          <GlassSurface width="100%" height="auto" borderRadius={16} blur={8} opacity={0.15} brightness={1.2}>
+          <SpotlightCard
+            className="!rounded-2xl !p-0 !bg-white/[0.02] !border-white/[0.06]"
+            spotlightColor="rgba(52, 211, 153, 0.15)"
+          >
             <div
               style={{ animation: "heroEnter 0.6s ease-out 0.1s both" }}
-              className="rounded-2xl p-6 sm:p-8 flex flex-col transition-all duration-500 hover:translate-y-[-4px] hover:shadow-[0_20px_60px_rgba(52,211,153,0.08)] w-full"
+              className="p-6 sm:p-8 flex flex-col w-full"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-green/10 border border-green/15 flex items-center justify-center">
@@ -68,17 +71,20 @@ export default function Pricing() {
                 {t("pricing.mioisland.cta" as any)}
               </a>
             </div>
-          </GlassSurface>
+          </SpotlightCard>
 
           {/* CodeLight Card */}
-          <GlassSurface width="100%" height="auto" borderRadius={16} blur={8} opacity={0.15} brightness={1.2}>
+          <SpotlightCard
+            className="!rounded-2xl !p-0 !bg-white/[0.02] !border-white/[0.06]"
+            spotlightColor="rgba(52, 211, 153, 0.15)"
+          >
             <div
               style={{ animation: "heroEnter 0.6s ease-out 0.2s both" }}
-              className="rounded-2xl p-6 sm:p-8 flex flex-col transition-all duration-500 hover:translate-y-[-4px] hover:shadow-[0_20px_60px_rgba(124,58,237,0.08)] w-full"
+              className="p-6 sm:p-8 flex flex-col w-full"
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-purple-accent/10 border border-purple-accent/15 flex items-center justify-center">
-                  <Smartphone size={20} className="text-purple-accent" />
+                <div className="w-10 h-10 rounded-xl bg-green/10 border border-green/15 flex items-center justify-center">
+                  <Smartphone size={20} className="text-green" />
                 </div>
                 <div>
                   <h3 className="font-display text-xl font-bold text-text-primary">{t("pricing.codelight.name" as any)}</h3>
@@ -91,7 +97,7 @@ export default function Pricing() {
               <ul className="space-y-3 mb-8 flex-1">
                 {codelightFeatures.map((key) => (
                   <li key={key} className="flex items-start gap-3">
-                    <Check size={16} className="text-purple-accent mt-0.5 shrink-0" />
+                    <Check size={16} className="text-green mt-0.5 shrink-0" />
                     <span className="text-sm text-text-secondary">{t(key as any)}</span>
                   </li>
                 ))}
@@ -100,13 +106,13 @@ export default function Pricing() {
                 href="https://apps.apple.com/us/app/code-light/id6761744871"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full text-center font-display font-bold text-sm bg-purple-accent text-text-primary rounded-xl py-3 transition-all duration-300 hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] hover:scale-[1.02]"
+                className="block w-full text-center font-display font-bold text-sm bg-green text-deep rounded-xl py-3 transition-all duration-300 hover:shadow-[0_0_30px_rgba(52,211,153,0.3)] hover:scale-[1.02]"
               >
                 {t("pricing.codelight.cta" as any)}
               </a>
               <p className="text-xs text-text-muted mt-3 text-center">{t("pricing.codelight.future" as any)}</p>
             </div>
-          </GlassSurface>
+          </SpotlightCard>
         </div>
 
         {/* Feedback CTA */}

@@ -54,7 +54,7 @@ export default function Navbar() {
             {/* Community button */}
             <button
               onClick={() => setCommunityOpen(true)}
-              className="flex items-center gap-1.5 sm:gap-2 text-purple-pale border border-purple-accent/25 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-accent/10 hover:border-purple-accent/40 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 sm:gap-2 text-green-bright border border-green/25 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-green/10 hover:border-green/40 transition-all cursor-pointer"
             >
               <Users size={14} />
               <span className="hidden sm:inline">{t("community.join")}</span>
