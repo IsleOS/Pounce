@@ -167,7 +167,6 @@ struct NotchView: View {
     /// active sessions) is always 0 — the notch shrinks tight around
     /// the hardware shape.
     private var expansionWidth: CGFloat {
-        guard hasActiveSessions else { return 60 }
         let geo = notchStore.customization.geometry(for: viewModel.screenID)
         let userMax = geo.maxWidth
         let userExpansion = max(0, userMax - closedNotchSize.width)
@@ -411,16 +410,23 @@ struct NotchView: View {
 
     // MARK: - Standby Content
 
+    /// Mirrors the left wing of CollapsedNotchContent (compact style):
+    /// idle dot + buddy icon, left-aligned, full active-state width.
     private var standbyContent: some View {
-        HStack(spacing: 6) {
-            PixelCharacterView(state: .idle)
-                .scaleEffect(0.35)
-                .frame(width: 18, height: 18)
-            Text(L10n.standby)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.5))
+        HStack(spacing: 0) {
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 6, height: 6)
+                if notchStore.customization.showBuddy {
+                    PixelCharacterView(state: .idle)
+                        .scaleEffect(0.28)
+                        .frame(width: 16, height: 16)
+                }
+            }
+            .padding(.leading, 6)
+            Spacer()
         }
-        .frame(width: closedNotchSize.width + 40)
     }
 
     // MARK: - Opened Header Content
