@@ -1,0 +1,29 @@
+name: Trigger Landing Deploy on Release
+
+# Rebuilds & redeploys the landing page whenever a GitHub Release is
+# published, edited, or released. The actual build/deploy logic lives
+# in .github/workflows/deploy-landing.yml on the `landing-page` branch;
+# this workflow only fires a workflow_dispatch at it so the Mac DMG
+# download CTA on miomioos.github.io picks up the new tag automatically.
+
+on:
+  release:
+    types: [published, edited, released]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger landing-page rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run deploy-landing.yml \
+            --repo ${{ github.repository }} \
+            --ref landing-page
+          echo "Dispatched deploy-landing.yml on landing-page branch."
