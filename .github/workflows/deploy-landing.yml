@@ -33,11 +33,21 @@ jobs:
         working-directory: landing
         run: npm ci
 
+      - name: Get latest release tag
+        id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(gh release view --repo ${{ github.repository }} --json tagName --jq '.tagName' 2>/dev/null || echo "v2.1.6")
+          echo "Latest release tag: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Build
         working-directory: landing
         run: npm run build
         env:
           GITHUB_PAGES: true
+          VITE_LATEST_VERSION: ${{ steps.latest.outputs.tag }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
