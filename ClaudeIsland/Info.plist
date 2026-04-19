@@ -24,5 +24,8 @@
     <key>SUEnableAutomaticChecks</key>
     <true/>
 
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Mio Island reads Now Playing info from music apps (Spotify, Apple Music, Google Chrome) via AppleScript to show the current track in your notch. Mio Island 通过 AppleScript 读取 Spotify、Apple Music、Chrome 等音乐播放器的当前曲目信息，在刘海区域显示。</string>
+
 </dict>
 </plist>

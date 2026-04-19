@@ -126,11 +126,25 @@ class NotchViewModel: ObservableObject {
                 width: min(screenRect.width * 0.4, 480),
                 height: 320
             )
-        case .plugin:
-            return CGSize(
+        case .plugin(let pluginId):
+            // Default budget for plugins that don't declare a preferred size
+            // (48% of screen width capped at 620, 78% of height capped at 780).
+            let defaultSize = CGSize(
                 width: min(screenRect.width * 0.48, 620),
                 height: min(screenRect.height * 0.78, 780)
             )
+            // Let a plugin request a smaller (or slightly larger) panel via
+            // Info.plist: MioPluginPreferredWidth / MioPluginPreferredHeight.
+            // The hint is already sanity-clamped by NativePluginManager; we
+            // still clip to the actual display so a plugin can't escape the
+            // user's screen.
+            if let hint = NativePluginManager.shared.plugin(id: pluginId)?.preferredPanelSize {
+                return CGSize(
+                    width: min(hint.width, screenRect.width * 0.95),
+                    height: min(hint.height, screenRect.height * 0.95)
+                )
+            }
+            return defaultSize
         case .instances:
             let baseHeight: CGFloat = 120
             let perSession: CGFloat = 100

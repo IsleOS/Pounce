@@ -76,6 +76,34 @@ final class NativePluginManager: ObservableObject {
             let result = instance.perform(sel, with: slot, with: context)
             return result?.takeUnretainedValue() as? NSView
         }
+
+        /// Optional panel size hint from the plugin's Info.plist:
+        ///   MioPluginPreferredWidth  (Number, 280..1200)
+        ///   MioPluginPreferredHeight (Number, 180..900)
+        /// Both must be present to take effect. Returns nil when either is
+        /// missing or out of bounds, letting the host fall back to its
+        /// default `(min(screenW*0.48, 620), min(screenH*0.78, 780))`.
+        var preferredPanelSize: CGSize? {
+            guard
+                let info = bundle.infoDictionary,
+                let rawW = (info["MioPluginPreferredWidth"] as? NSNumber)?.doubleValue,
+                let rawH = (info["MioPluginPreferredHeight"] as? NSNumber)?.doubleValue
+            else {
+                return nil
+            }
+            // Sanity clamp: reject absurdly small (< mini notch size) or
+            // absurdly large (bigger than full-HD) hints.
+            guard rawW >= 280, rawW <= 1200, rawH >= 180, rawH <= 900 else {
+                return nil
+            }
+            return CGSize(width: rawW, height: rawH)
+        }
+    }
+
+    /// Look up a loaded plugin by id. Used by NotchViewModel to ask for a
+    /// panel size hint before allocating the expanded area.
+    func plugin(id: String) -> LoadedPlugin? {
+        loadedPlugins.first(where: { $0.id == id })
     }
 
     private var pluginsDir: URL {
