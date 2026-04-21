@@ -229,9 +229,11 @@ struct ClaudeInstancesView: View {
                 PluginHeaderButtons(viewModel: viewModel)
 
                 Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        viewModel.toggleMenu()
-                    }
+                    // Skip the intermediate NotchMenu — that fallback
+                    // menu only contains a single "设置" row and feels
+                    // redundant. Open the full SystemSettings panel
+                    // directly.
+                    SystemSettingsWindow.shared.show()
                 } label: {
                     Image(systemName: "gearshape")
                         .notchFont(10)
