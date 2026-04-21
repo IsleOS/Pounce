@@ -152,6 +152,34 @@ enum L10n {
     static var notchBuddyNeon: String { tr("Neon", "霓虹") }
     static var launchAtLogin: String { tr("Launch at Login", "开机启动") }
     static var hooks: String { tr("Hooks", "钩子") }
+    // Hook diagnostics (Advanced tab)
+    static var hookDiagTitle: String { tr("Hook Diagnostics", "Hook 诊断") }
+    static var hookDiagSubtitle: String { tr("Inspect and repair Claude and Codex hook installation.", "检查并修复 Claude 与 Codex 的 hook 安装状态。") }
+    static var hookDiagAgentClaude: String { tr("Claude Code", "Claude Code") }
+    static var hookDiagAgentCodex: String { tr("Codex", "Codex") }
+    static var hookDiagHealthy: String { tr("All good", "一切正常") }
+    static var hookDiagDisabled: String { tr("Not enabled", "未启用") }
+    static func hookDiagErrorCount(_ n: Int) -> String {
+        isChinese ? "\(n) 个错误" : "\(n) error\(n == 1 ? "" : "s")"
+    }
+    static func hookDiagNoticeCount(_ n: Int) -> String {
+        isChinese ? "\(n) 条提示" : "\(n) notice\(n == 1 ? "" : "s")"
+    }
+    static var hookDiagRecheck: String { tr("Re-check", "重新检查") }
+    static var hookDiagReinstall: String { tr("Reinstall", "重新安装") }
+    static var hookDiagUninstall: String { tr("Uninstall", "卸载") }
+    static var hookDiagRepair: String { tr("Auto-repair", "一键修复") }
+    static var hookDiagCleanupLegacy: String { tr("Clean up legacy hooks", "清理遗留 hooks") }
+    static var hookDiagCleanupLegacyHint: String { tr("Remove leftover scripts and config entries from earlier app versions (Claude Island, Code Island).", "移除 Claude Island / Code Island 旧版本遗留的脚本与配置。") }
+    static var hookDiagCodexDisabledHint: String { tr("Codex is turned off. Enable it in the General tab to install its hooks.", "Codex 未启用。请到「通用」标签打开后再安装 hook。") }
+    static var hookDiagIssueScriptMissing: String { tr("Hook script file is missing", "Hook 脚本文件缺失") }
+    static var hookDiagIssueScriptNotExecutable: String { tr("Hook script exists but is not executable", "Hook 脚本无执行权限") }
+    static var hookDiagIssueConfigMalformed: String { tr("Config file contains invalid JSON", "配置文件 JSON 损坏") }
+    static var hookDiagIssueStaleCommand: String { tr("Config references a script path that no longer exists", "配置指向的脚本路径已失效") }
+    static var hookDiagIssueOtherHooks: String { tr("Other (non-CodeIsland) hooks also installed", "检测到其他非 CodeIsland 的 hook") }
+    static var hookDiagIssueManifestMissing: String { tr("Install manifest file missing", "安装清单文件缺失") }
+    static var hookDiagCleanupDone: String { tr("Legacy hooks cleaned.", "已清理遗留 hooks。") }
+    static var hookDiagNothingToClean: String { tr("No legacy hooks found.", "没有遗留 hooks。") }
     static var codexSupport: String { tr("Codex Support", "Codex 支持") }
     static var accessibility: String { tr("Accessibility", "辅助功能") }
     static var version: String { tr("Version", "版本") }

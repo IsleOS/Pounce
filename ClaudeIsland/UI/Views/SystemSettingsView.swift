@@ -201,7 +201,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 /// only as an accent on toggles, active sidebar icons, and focus rings.
 /// Palette is lifted from the Anthropic-style reference design — see
 /// `~/Desktop/1_files/UI.jsx` and the System Settings HTML mock.
-private enum Theme {
+enum Theme {
     // Sidebar — warm charcoal, NOT lime anymore.
     static let sidebarFill = Color(red: 0x20/255, green: 0x1F/255, blue: 0x27/255)
     static let sidebarText = Color.white
@@ -460,7 +460,7 @@ private struct SidebarPillRow: View {
 /// Card container. Reference design uses `rgba(255,255,255,0.03)` fill +
 /// `rgba(255,255,255,0.08)` border at radius 12. The optional uppercase
 /// "section label" now renders *above* the card, not inside it.
-private struct SettingsCard<Content: View>: View {
+struct SettingsCard<Content: View>: View {
     let title: String?
     @ViewBuilder let content: Content
 
@@ -1142,6 +1142,8 @@ private struct CodeLightTab: View {
 private struct AdvancedTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            HookDiagnosticsView()
+
             SettingsCard(title: L10n.clearEndedSessions) {
                 Button {
                     Task { await SessionStore.shared.process(.clearEndedSessions) }
