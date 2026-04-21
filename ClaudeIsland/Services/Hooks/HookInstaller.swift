@@ -179,30 +179,58 @@ struct HookInstaller {
         }
     }
 
-    /// Strip hook entries from older app versions (Claude Island etc.) and
-    /// delete their leftover scripts. Idempotent — safe to run every launch.
-    /// Without this, users who installed a pre-rename build keep double-firing
-    /// every Claude Code hook because both the old and new scripts are still
-    /// wired up in settings.json.
-    static func cleanupLegacyHooks() {
-        let legacyScripts = ["claude-island-state.py"]
+    /// Script basenames left behind by older app versions (Claude Island,
+    /// Code Island) that should no longer be referenced in settings.json.
+    static let legacyHookScripts = ["claude-island-state.py"]
 
+    /// Strip hook entries from older app versions and delete their leftover
+    /// scripts. Idempotent — safe to run every launch.
+    static func cleanupLegacyHooks() {
         let claudeDir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".claude")
         let hooksDir = claudeDir.appendingPathComponent("hooks")
         let settings = claudeDir.appendingPathComponent("settings.json")
 
-        // 1. Delete the legacy script files on disk (no-op if missing).
-        for name in legacyScripts {
+        // 1. Delete legacy script files on disk (no-op if missing).
+        for name in legacyHookScripts {
             let path = hooksDir.appendingPathComponent(name)
             try? FileManager.default.removeItem(at: path)
         }
 
-        // 2. Strip their entries out of settings.json hooks config.
+        // 2. Prune legacy entries from settings.json (pure function below).
         guard let data = try? Data(contentsOf: settings),
-              var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              var hooks = json["hooks"] as? [String: Any] else {
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return
+        }
+
+        let pruned = pruneLegacyHookEntries(from: json, legacyScripts: legacyHookScripts)
+        guard pruned.changed else { return }
+
+        guard let newData = try? JSONSerialization.data(
+            withJSONObject: pruned.result,
+            options: [.prettyPrinted, .sortedKeys]
+        ), !newData.isEmpty,
+              // Round-trip check: serialize → deserialize must succeed before we write.
+              (try? JSONSerialization.jsonObject(with: newData)) != nil else {
+            return
+        }
+        try? newData.write(to: settings, options: .atomic)
+    }
+
+    /// Pure function: given a decoded settings.json dict, return a copy with
+    /// every hook group that references any legacy script removed. Empty
+    /// hook events are dropped; if the entire `hooks` map ends up empty the
+    /// `hooks` key itself is removed. `changed` is true iff at least one
+    /// entry was pruned.
+    ///
+    /// Kept `internal` so future tests can `@testable import` this directly
+    /// without touching the file system.
+    static func pruneLegacyHookEntries(
+        from json: [String: Any],
+        legacyScripts: [String]
+    ) -> (result: [String: Any], changed: Bool) {
+        guard var hooks = json["hooks"] as? [String: Any] else {
+            return (json, false)
         }
 
         func entryReferencesLegacy(_ entry: [String: Any]) -> Bool {
@@ -213,13 +241,13 @@ struct HookInstaller {
             }
         }
 
-        var mutated = false
+        var changed = false
         for (event, value) in hooks {
             guard var entries = value as? [[String: Any]] else { continue }
             let before = entries.count
             entries.removeAll(where: entryReferencesLegacy)
             guard entries.count != before else { continue }
-            mutated = true
+            changed = true
             if entries.isEmpty {
                 hooks.removeValue(forKey: event)
             } else {
@@ -227,20 +255,15 @@ struct HookInstaller {
             }
         }
 
-        guard mutated else { return }
+        guard changed else { return (json, false) }
 
+        var result = json
         if hooks.isEmpty {
-            json.removeValue(forKey: "hooks")
+            result.removeValue(forKey: "hooks")
         } else {
-            json["hooks"] = hooks
+            result["hooks"] = hooks
         }
-
-        if let newData = try? JSONSerialization.data(
-            withJSONObject: json,
-            options: [.prettyPrinted, .sortedKeys]
-        ), !newData.isEmpty {
-            try? newData.write(to: settings, options: .atomic)
-        }
+        return (result, true)
     }
 
     private static func detectPython() -> String {
