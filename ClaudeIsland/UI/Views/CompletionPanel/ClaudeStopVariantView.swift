@@ -34,18 +34,25 @@ struct ClaudeStopVariantView: View {
     )
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            header
-            summaryView
-            if let err = controller.state.sendError, err.stableId == entry.stableId {
-                errorRow(err.message)
+        ZStack {
+            // Pixel background layer — SIBLING of foreground (not
+            // `.background()`), so SwiftUI doesn't try to propagate
+            // geometry from this view upward and confuse the notch
+            // window's sizing.
+            PixelCardBackground(variant: .blue, cornerRadius: 14)
+
+            VStack(alignment: .leading, spacing: 10) {
+                header
+                summaryView
+                if let err = controller.state.sendError, err.stableId == entry.stableId {
+                    errorRow(err.message)
+                }
+                phraseRow
+                terminalButtonRow
             }
-            phraseRow
-            terminalButtonRow
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 14).padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(panelBackground)
         .onAppear { controller.setPanelVisible(true) }
         .onDisappear { controller.setPanelVisible(false) }
     }
