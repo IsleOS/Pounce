@@ -35,10 +35,6 @@ struct ClaudeStopVariantView: View {
 
     var body: some View {
         ZStack {
-            // Pixel background layer — SIBLING of foreground (not
-            // `.background()`), so SwiftUI doesn't try to propagate
-            // geometry from this view upward and confuse the notch
-            // window's sizing.
             PixelCardBackground(variant: .blue, cornerRadius: 14)
 
             VStack(alignment: .leading, spacing: 10) {
@@ -53,6 +49,11 @@ struct ClaudeStopVariantView: View {
             .padding(.horizontal, 14).padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        // Hard-constrained panel dimensions. NotchViewModel.openedSize
+        // returns 600×180 for .completion(.claudeStop); by applying the
+        // same ceiling here we guarantee the panel CANNOT stretch wider
+        // regardless of any intermediate SwiftUI layout quirk.
+        .frame(maxWidth: 600, maxHeight: 180, alignment: .leading)
         .onAppear { controller.setPanelVisible(true) }
         .onDisappear { controller.setPanelVisible(false) }
     }
