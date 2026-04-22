@@ -68,6 +68,20 @@ actor CodexChatHistoryParser {
         return messages
     }
 
+    /// Returns the text content of the most recent assistant-role message in
+    /// the given Codex rollout file. Returns nil if the file has no assistant
+    /// messages. Spec §5.5.
+    ///
+    /// No length cap — callers should use SwiftUI `.lineLimit(n)` +
+    /// `.truncationMode(.tail)` to clip at render time, so the user can
+    /// read more when the panel is wide.
+    ///
+    /// Async from outside because this is actor-isolated.
+    func lastAssistantMessage(transcriptPath: String) -> String? {
+        let all = parse(transcriptPath: transcriptPath)
+        return all.last(where: { $0.role == .assistant })?.textContent
+    }
+
     // MARK: - Private
 
     private func parseResponseItem(
