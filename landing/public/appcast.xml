@@ -7,15 +7,15 @@
     <language>en</language>
     <item>
       <title>Mio Island 2.2.5</title>
-      <pubDate>Wed, 22 Apr 2026 10:38:49 +0800</pubDate>
+      <pubDate>Wed, 22 Apr 2026 11:31:29 +0800</pubDate>
       <sparkle:version>32</sparkle:version>
       <sparkle:shortVersionString>2.2.5</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
       <enclosure
         url="https://github.com/MioMioOS/MioIsland/releases/download/v2.2.5/MioIsland-v2.2.5.dmg"
-        length="8055648"
+        length="8204507"
         type="application/octet-stream"
-        sparkle:edSignature="7FXiXLqaH/rLZcmeg5AHqlfzCbX3P65gdUn2naPC1s3YuVVAzHbn/M1s/T8j72LYrMBKdFgXaIOREIZyK8DkAg=="
+        sparkle:edSignature="1EZ81XjVGxtEhpPIDZDdzkBUgM0hPI+JYk3IrAFdVthuYkfRJVVpYVZ++5V0a5PHJ7JoDnFuVpZrez3+dRkrCg=="
       />
     </item>
   </channel>
