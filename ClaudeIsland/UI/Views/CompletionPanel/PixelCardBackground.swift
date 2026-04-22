@@ -221,72 +221,76 @@ struct PixelCardBackground: View {
     @State private var isHovering: Bool = false
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                // 1. Solid base
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(
-                        LinearGradient(
-                            colors: [baseFill, baseFill.opacity(0.92)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        )
+        // NOTE: do NOT wrap the whole body in a GeometryReader. GeometryReader
+        // reports its proposed size and also forces maxWidth/maxHeight to
+        // infinity on its child, which — when used as `.background(...)` —
+        // can push the parent's frame to expand past its intended bounds.
+        // Instead, each sized component uses `.containerRelativeFrame` /
+        // implicit parent-sizing, and we capture the actual rendered size
+        // via `.onGeometryChange` on the top-level ZStack.
+        ZStack {
+            // 1. Solid base fill
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(
+                    LinearGradient(
+                        colors: [baseFill, baseFill.opacity(0.92)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
                     )
-
-                // 2. Pixel canvas — observes `tick` for redraw
-                Canvas { ctx, _ in
-                    _ = grid.tick   // trigger redraw on publish
-                    let max = variant.maxSizeInteger
-                    for pixel in grid.pixels {
-                        guard pixel.size > 0 else { continue }
-                        let offset = max * 0.5 - pixel.size * 0.5
-                        let rect = CGRect(
-                            x: pixel.x + offset,
-                            y: pixel.y + offset,
-                            width: pixel.size,
-                            height: pixel.size
-                        )
-                        ctx.fill(Path(rect), with: .color(pixel.color))
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-
-                // 3. Radial dark-center overlay (::before)
-                RadialGradient(
-                    colors: [variant.radialDarkColor, variant.radialDarkColor.opacity(0)],
-                    center: .center,
-                    startRadius: 0,
-                    endRadius: min(geo.size.width, geo.size.height) * 0.55
                 )
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                .opacity(isHovering ? 1 : 0)
-                .animation(.easeOut(duration: 0.8), value: isHovering)
-                .allowsHitTesting(false)
 
-                // 4. Border — subtle → brighter on hover
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(
-                        isHovering
-                            ? Color(hex: 0x7DD3FC).opacity(0.35)
-                            : Color.white.opacity(0.10),
-                        lineWidth: isHovering ? 0.9 : 0.6
+            // 2. Pixel canvas
+            Canvas { ctx, _ in
+                _ = grid.tick   // observe redraw trigger
+                let max = variant.maxSizeInteger
+                for pixel in grid.pixels {
+                    guard pixel.size > 0 else { continue }
+                    let offset = max * 0.5 - pixel.size * 0.5
+                    let rect = CGRect(
+                        x: pixel.x + offset,
+                        y: pixel.y + offset,
+                        width: pixel.size,
+                        height: pixel.size
                     )
-                    .animation(.easeOut(duration: 0.25), value: isHovering)
-            }
-            .onAppear {
-                let reduced = respectsReducedMotion && NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-                grid.rebuild(size: geo.size, variant: variant, reducedMotion: reduced)
-            }
-            .onChange(of: geo.size) { _, newSize in
-                let reduced = respectsReducedMotion && NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-                grid.rebuild(size: newSize, variant: variant, reducedMotion: reduced)
-            }
-            .onHover { hovering in
-                isHovering = hovering
-                if hovering {
-                    grid.startAppear()
-                } else {
-                    grid.startDisappear()
+                    ctx.fill(Path(rect), with: .color(pixel.color))
                 }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+
+            // 3. Radial dark-center overlay (reactbits ::before)
+            RadialGradient(
+                colors: [variant.radialDarkColor, variant.radialDarkColor.opacity(0)],
+                center: .center,
+                startRadius: 0,
+                endRadius: 220
+            )
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .opacity(isHovering ? 1 : 0)
+            .animation(.easeOut(duration: 0.8), value: isHovering)
+            .allowsHitTesting(false)
+
+            // 4. Border
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .strokeBorder(
+                    isHovering
+                        ? Color(hex: 0x7DD3FC).opacity(0.35)
+                        : Color.white.opacity(0.10),
+                    lineWidth: isHovering ? 0.9 : 0.6
+                )
+                .animation(.easeOut(duration: 0.25), value: isHovering)
+        }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            guard newSize.width > 0, newSize.height > 0 else { return }
+            let reduced = respectsReducedMotion && NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            grid.rebuild(size: newSize, variant: variant, reducedMotion: reduced)
+        }
+        .onHover { hovering in
+            isHovering = hovering
+            if hovering {
+                grid.startAppear()
+            } else {
+                grid.startDisappear()
             }
         }
     }
