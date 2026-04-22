@@ -493,8 +493,6 @@ enum L10n {
     static var smartSuppression: String { tr("Smart Suppression", "智能抑制") }
     static var autoCollapseOnMouseLeave: String { tr("Auto-Collapse on Leave", "离开时自动收起") }
     static var compactCollapsed: String { tr("Compact Notch", "紧凑刘海") }
-    static var autoExpandOnComplete: String { tr("Auto-Expand on Complete", "完成时自动展开") }
-
     // MARK: - Notch customization
     //
     // Deviation from spec: the spec (Section 4.5) lists these keys
