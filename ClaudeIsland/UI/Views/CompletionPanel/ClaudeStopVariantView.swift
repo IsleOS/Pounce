@@ -109,7 +109,21 @@ struct ClaudeStopVariantView: View {
                 return
             }
             DebugLogger.log("CP/send", "attempt session=\(stableId.prefix(8)) termApp=\(session.terminalApp ?? "nil") pid=\(session.pid) cwd=\(session.cwd) text=\(text)")
-            let ok = await TerminalWriter.shared.sendText(text + "\n", to: session)
+            // Use sendTextDirect — it resolves the cmux target via livePid
+            // (CMUX_*_ID env vars in /proc), which works regardless of the
+            // user's cmux workspace title. `sendText(_:to:)` falls back to
+            // string-matching cwd dirName against workspace title, which
+            // breaks when the user has renamed their workspace (e.g. "ISLAND"
+            // instead of "CodeIsland").
+            let ok = await TerminalWriter.shared.sendTextDirect(
+                text + "\n",
+                claudeUuid: session.sessionId,
+                cwd: session.cwd,
+                livePid: session.pid,
+                cmuxWorkspaceId: nil,
+                cmuxSurfaceId: nil,
+                terminalApp: session.terminalApp
+            )
             DebugLogger.log("CP/send", "result session=\(stableId.prefix(8)) ok=\(ok)")
             await MainActor.run {
                 if ok { controller.dismissFront(stableId: stableId) }

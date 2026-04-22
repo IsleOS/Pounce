@@ -125,7 +125,18 @@ struct PendingToolVariantView: View {
                 }
                 return
             }
-            let ok = await TerminalWriter.shared.sendText(text, to: session)
+            DebugLogger.log("CP/injection", "attempt termApp=\(session.terminalApp ?? "nil") pid=\(session.pid) cwd=\(session.cwd)")
+            // Use sendTextDirect for pid-based cmux target resolution (see ClaudeStopVariantView).
+            let ok = await TerminalWriter.shared.sendTextDirect(
+                text,
+                claudeUuid: session.sessionId,
+                cwd: session.cwd,
+                livePid: session.pid,
+                cmuxWorkspaceId: nil,
+                cmuxSurfaceId: nil,
+                terminalApp: session.terminalApp
+            )
+            DebugLogger.log("CP/injection", "result session=\(stableId.prefix(8)) ok=\(ok)")
             await MainActor.run {
                 if ok { controller.dismissFront(stableId: stableId) }
                 else  { controller.recordSendFailure(stableId: stableId, message: L10n.qrSendFailed) }
