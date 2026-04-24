@@ -239,6 +239,23 @@ actor SessionStore {
 
         if event.event == "Stop" {
             session.subagentState = SubagentState()
+            // Timestamp the Stop event. CompletionPanelController keys off
+            // this to fire the claudeStop variant. Kept separate from
+            // lastActivity (which bumps on ANY hook) so we don't need to
+            // guess whether a given publisher frame was a completion.
+            //
+            // Dedup: Claude Code emits back-to-back Stop hooks during
+            // network-retry cascades (disconnect → API error → retry → API
+            // error → …). Each retry produces a fresh processing →
+            // waitingForInput transition and another Stop. Collapsing Stops
+            // within a 3 s window to the first one prevents the completion
+            // panel (and downstream consumers) from firing on every retry.
+            let now = Date()
+            if let prev = session.lastStopAt, now.timeIntervalSince(prev) < 3.0 {
+                DebugLogger.log("Store", "Stop deduped (Δ=\(String(format: "%.2f", now.timeIntervalSince(prev)))s) sid=\(sessionId.prefix(8))")
+            } else {
+                session.lastStopAt = now
+            }
         }
 
         // Parse conversationInfo only when needed (not on every event — too expensive for large JSONL)

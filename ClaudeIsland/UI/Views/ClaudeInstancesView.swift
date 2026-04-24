@@ -878,7 +878,9 @@ struct InstanceRow: View {
                 }
             )
             .onChange(of: session.phase) { oldPhase, newPhase in
-                // Flash on phase transition
+                // Visual flash on any phase change. Keep this on phase
+                // because flashing mirrors subjective activity (including
+                // transient errors). Sound is handled separately below.
                 if oldPhase != newPhase {
                     withAnimation(.easeIn(duration: 0.15)) {
                         phaseFlash = true
@@ -886,11 +888,20 @@ struct InstanceRow: View {
                     withAnimation(.easeOut(duration: 0.5).delay(0.15)) {
                         phaseFlash = false
                     }
-                    // Play sound for important transitions
-                    if newPhase == .waitingForInput && (oldPhase == .processing || oldPhase == .compacting) {
-                        SoundManager.shared.play(.sessionComplete)
-                    }
                 }
+            }
+            .onChange(of: session.lastStopAt) { oldStop, newStop in
+                // Play completion sound ONLY on a real Stop hook.
+                // `lastStopAt` is set exclusively in SessionStore's Stop-
+                // event handler (with a 3 s dedup window for retry
+                // cascades). Phase-based detection used to fire here but
+                // it mistakes `Notification status=waiting_for_input`
+                // (network error / idle-prompt) for a completion, which
+                // caused old already-finished sessions to replay the sound
+                // whenever the network flapped.
+                guard let new = newStop else { return }
+                if let old = oldStop, old >= new { return }
+                SoundManager.shared.play(.sessionComplete)
             }
         }
         .onHover { isHovered = $0 }

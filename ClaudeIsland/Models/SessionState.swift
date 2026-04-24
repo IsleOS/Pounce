@@ -69,6 +69,14 @@ struct SessionState: Equatable, Identifiable, Sendable {
     var createdAt: Date
     /// When the session was marked as ended (for auto-cleanup after timeout)
     var endedAt: Date?
+    /// Most recent Stop hook timestamp. Written only by the Stop-event
+    /// handler, so any change = a real "Claude just finished this turn"
+    /// signal (unlike `lastActivity` which also bumps on tool events).
+    /// CompletionPanelController watches this to trigger the claudeStop
+    /// variant — robust against SubagentStop → Stop sequences where the
+    /// session is already in waitingForInput before the true Stop hook
+    /// arrives, which phase-diff detection can't distinguish.
+    var lastStopAt: Date?
 
     // MARK: - Identifiable
 
