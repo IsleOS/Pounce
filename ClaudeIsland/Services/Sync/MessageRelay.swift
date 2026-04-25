@@ -310,7 +310,15 @@ final class MessageRelay {
         // reaches a terminal state AND we've captured its terminal content,
         // drop it from pending — further ticks skip serialization for it.
         if !pending.isEmpty {
-            let itemsById = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
+            // Use `uniquingKeysWith:` rather than `uniqueKeysWithValues:` —
+            // the latter traps on duplicate keys, which DOES happen in
+            // practice: SessionStore's loadFromHistoryFile + concurrent
+            // hook events can briefly produce two ChatHistoryItem entries
+            // with the same id during merge. v2.2.7 never publishedState
+            // from that path, so this trap was latent. bd9674c0 added a
+            // `publishState()` at the end of loadFromHistoryFile, exposing
+            // the bug as a startup crash. Keep the latest copy on collision.
+            let itemsById = Dictionary(items.map { ($0.id, $0) }, uniquingKeysWith: { _, latest in latest })
             var settled: Set<String> = []
             for itemId in pending {
                 guard let item = itemsById[itemId] else {
