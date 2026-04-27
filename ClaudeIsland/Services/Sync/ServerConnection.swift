@@ -113,13 +113,18 @@ final class ServerConnection: ObservableObject {
         state = .connecting
 
         let url = URL(string: serverUrl)!
+        // Reconnect backoff: was capped at 5s with no jitter. After a network
+        // blip every Mac in the field would all hit the server in lockstep
+        // every 5s — a small thundering herd. Cap at 30s + use the library's
+        // built-in randomization to spread attempts.
         manager = SocketManager(socketURL: url, config: [
             .log(false),
             .path("/v1/updates"),
             .connectParams(["token": token, "clientType": "user-scoped"]),
             .reconnects(true),
-            .reconnectWait(1),
-            .reconnectWaitMax(5),
+            .reconnectWait(2),
+            .reconnectWaitMax(30),
+            .randomizationFactor(0.5),
             .forceWebsockets(true),
             .extraHeaders(["Authorization": "Bearer \(token)"]),
         ])

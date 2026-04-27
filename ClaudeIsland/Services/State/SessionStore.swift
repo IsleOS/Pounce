@@ -26,8 +26,11 @@ actor SessionStore {
     /// Pending file syncs (debounced)
     private var pendingSyncs: [String: Task<Void, Never>] = [:]
 
-    /// Sync debounce interval (100ms)
-    private let syncDebounceNs: UInt64 = 100_000_000
+    /// Sync debounce interval. 50ms (was 100ms) — iPhone users felt the
+    /// lag between Claude finishing a line and seeing it on the app; 50ms
+    /// still coalesces FSEvents bursts effectively while halving the floor
+    /// latency for Mac→iPhone message sync.
+    private let syncDebounceNs: UInt64 = 50_000_000
 
     /// Process liveness checker (injectable for testing)
     private let livenessChecker: ProcessLivenessChecker

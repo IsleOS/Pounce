@@ -424,7 +424,11 @@ final class MessageRelay {
 
     private func startAliveTimer(for sessionId: String) {
         stopAliveTimer(for: sessionId)
-        let timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+        // 5s interval (was 2s). The phone treats sessions as live for ~30s
+        // after the last alive ping, so 5s is plenty for liveness while cutting
+        // socket emit volume by 60%. With many concurrent sessions the old
+        // 2s rate was hammering the server with redundant heartbeats.
+        let timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             guard let serverId = self?.serverSessionIds[sessionId] else { return }
             self?.connection.sendAlive(sessionId: serverId)
         }
