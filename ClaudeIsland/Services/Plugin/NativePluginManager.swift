@@ -33,9 +33,23 @@ final class NativePluginManager: ObservableObject {
     static let shared = NativePluginManager()
     private static let log = Logger(subsystem: "com.codeisland.app", category: "NativePluginManager")
     private static let disabledOfficialsKey = "DisabledOfficialPlugins"
+    private static let pinnedIdsKey = "PinnedPluginIds"
+
+    /// Maximum number of plugin icons that can be pinned to the top bar
+    /// Dock. Above this, the user pops the Dock UI ("...") to access the
+    /// remaining plugins.
+    static let maxPinned = 4
 
     @Published private(set) var loadedPlugins: [LoadedPlugin] = []
     @Published private(set) var disabledOfficialIds: Set<String> = []
+
+    /// Plugin IDs the user has pinned to the top bar, in display order.
+    /// Bounded by `maxPinned`. Persisted to UserDefaults under
+    /// `PinnedPluginIds`. The header view consumes this directly; if a
+    /// pinned ID points to a plugin that's no longer loaded (uninstalled
+    /// from disk), it's skipped silently in the header but kept in the
+    /// list so reinstalling restores the slot.
+    @Published private(set) var pinnedIds: [String] = []
 
     /// UI-facing list: loaded plugins + disabled officials shown as reinstall slots.
     struct PluginListItem: Identifiable {
@@ -189,6 +203,11 @@ final class NativePluginManager: ObservableObject {
             disabledOfficialIds = Set(saved)
         }
 
+        // Load pinned plugin IDs from UserDefaults
+        if let saved = UserDefaults.standard.array(forKey: Self.pinnedIdsKey) as? [String] {
+            pinnedIds = Array(saved.prefix(Self.maxPinned))
+        }
+
         // Register Swift-built-in officials that aren't user-disabled.
         // Bundle-based officials (factory == nil) are loaded from disk in the scan below.
         for official in OfficialPlugins.all
@@ -228,6 +247,77 @@ final class NativePluginManager: ObservableObject {
         }
 
         Self.log.info("Loaded \(self.loadedPlugins.count) native plugin(s)")
+
+        // Prune stale entries: pinnedIds may reference plugins that were
+        // uninstalled outside the app (deleted from ~/.config/codeisland/
+        // plugins/) or whose bundle is broken and failed to load. If we
+        // don't prune, `pinnedIds.count` reports a phantom count — the
+        // header strip silently skips stale entries (looks like an empty
+        // slot) but `atLimit` still returns true, so the user can't pin a
+        // new plugin into the visibly-empty slot.
+        let loadedIds = Set(loadedPlugins.map(\.id))
+        let pruned = pinnedIds.filter { loadedIds.contains($0) }
+        if pruned.count != pinnedIds.count {
+            pinnedIds = pruned
+            persistPinnedIds()
+        }
+
+        // First-run default: if the user has never pinned anything, seed
+        // the Dock with the first `maxPinned` loaded plugins (preserves the
+        // pre-Dock behaviour where the header just showed the first 4).
+        // Subsequent launches skip this — once the user has pinned (or
+        // explicitly unpinned everything), `pinnedIds` is the source of
+        // truth.
+        if UserDefaults.standard.object(forKey: Self.pinnedIdsKey) == nil
+            && !loadedPlugins.isEmpty {
+            pinnedIds = loadedPlugins.prefix(Self.maxPinned).map(\.id)
+            persistPinnedIds()
+        }
+    }
+
+    // MARK: - Pinning
+
+    /// True iff the given plugin id is currently pinned to the top bar.
+    func isPinned(_ id: String) -> Bool { pinnedIds.contains(id) }
+
+    /// Add a plugin to the Dock. No-op if already pinned or Dock is full.
+    /// Returns true on success.
+    @discardableResult
+    func pin(_ id: String) -> Bool {
+        guard !pinnedIds.contains(id),
+              pinnedIds.count < Self.maxPinned,
+              loadedPlugins.contains(where: { $0.id == id }) else { return false }
+        pinnedIds.append(id)
+        persistPinnedIds()
+        return true
+    }
+
+    /// Remove a plugin from the Dock.
+    func unpin(_ id: String) {
+        guard let idx = pinnedIds.firstIndex(of: id) else { return }
+        pinnedIds.remove(at: idx)
+        persistPinnedIds()
+    }
+
+    /// Move a pinned plugin to a new slot index. If the source isn't pinned
+    /// yet, this acts as a "pin to slot N" — useful for drag-from-list →
+    /// drop-on-empty-slot. Out-of-range targets clamp.
+    func movePinned(id: String, toSlot targetIdx: Int) {
+        let clamped = max(0, min(targetIdx, Self.maxPinned - 1))
+        var next = pinnedIds.filter { $0 != id }
+        // Cap at maxPinned-1 if we're inserting (so total stays ≤ maxPinned).
+        // If the id wasn't pinned and Dock is already full, don't grow over.
+        if !pinnedIds.contains(id) && next.count >= Self.maxPinned {
+            return
+        }
+        let insertAt = min(clamped, next.count)
+        next.insert(id, at: insertAt)
+        pinnedIds = Array(next.prefix(Self.maxPinned))
+        persistPinnedIds()
+    }
+
+    private func persistPinnedIds() {
+        UserDefaults.standard.set(pinnedIds, forKey: Self.pinnedIdsKey)
     }
 
     /// Tracks CFBundleIdentifier values whose code has already been loaded
@@ -357,6 +447,11 @@ final class NativePluginManager: ObservableObject {
     /// (so their slot stays visible and they can be re-enabled with one click).
     /// For third-party .bundle plugins this deletes the bundle from disk.
     func uninstall(id: String) {
+        // Drop from Dock if pinned — the slot would otherwise show a stale
+        // entry that silently disappears from the header.
+        if pinnedIds.contains(id) {
+            unpin(id)
+        }
         if OfficialPlugins.ids.contains(id) {
             disabledOfficialIds.insert(id)
             persistDisabledOfficials()
