@@ -399,10 +399,12 @@ enum L10n {
     }
     /// Used only when the server response is missing a `message` field.
     /// Normally the server-sent message wins so admins can change copy
-    /// (e.g. mention v2.5.0) without shipping a new Mac build.
+    /// (e.g. mention a specific version) without shipping a new Mac
+    /// build. Kept version-agnostic so a stale fallback never lies
+    /// about the required version.
     static var upgradeRequiredFallbackMessage: String {
-        tr("The server requires MioIsland v2.4.0 or newer to continue.",
-           "服务器端要求 MioIsland v2.4.0 或更新版本才能继续使用。")
+        tr("The server requires a newer MioIsland or Code Light client to continue.",
+           "服务器端要求最新版本的 MioIsland 或 Code Light 客户端才能继续使用。")
     }
     static var upgradeNow: String { tr("Update Now", "立即升级") }
     static var upgradeLater: String { tr("Later", "稍后") }
