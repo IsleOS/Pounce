@@ -317,6 +317,19 @@ enum L10n {
     static var redeemDisabledOffline: String {
         tr("Connect to the server first to activate.", "请先连接服务器再激活。")
     }
+    /// Hero copy for the post-redeem celebration overlay. Kept short so the
+    /// confetti can carry the energy; longer detail rides on the days line
+    /// below it.
+    static var redeemSuccessTitle: String { tr("Activated!", "兑换成功!") }
+    /// Subtitle on the celebration card — "+ N days of trial / 获得 N 天试用".
+    /// Singular vs plural is handled per-locale: Chinese ignores plurals,
+    /// English uses "day" only when N==1.
+    static func redeemSuccessDays(_ d: Int) -> String {
+        if L10n.isChinese {
+            return "获得 \(d) 天试用"
+        }
+        return d == 1 ? "+1 day of trial" : "+\(d) days of trial"
+    }
     /// Trial-active banner — "已激活(剩余 14 天)" to match iOS App's
     /// subscription row exactly. Short copy fits on one line in the
     /// 280pt popup card; expiry date is dropped (caller can show a

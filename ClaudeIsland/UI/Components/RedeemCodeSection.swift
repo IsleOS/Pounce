@@ -23,6 +23,7 @@
 //     enforces.
 //
 
+import AppKit
 import Combine
 import SwiftUI
 
@@ -56,8 +57,13 @@ final class RedeemCodeFlow: ObservableObject {
         isSubmitting = true
         lastError = nil
         do {
-            _ = try await SyncManager.shared.redeemCode(code)
+            let record = try await SyncManager.shared.redeemCode(code)
             input = ""
+            // Full-screen celebration: NSPanel-based overlay floats above the
+            // whole Mac display so the moment doesn't feel cramped to the
+            // 280pt pairing popup. Auto-dismisses ~3.2s later via its own
+            // internal task, so we don't have to hold state here.
+            CelebrationOverlay.shared.present(days: record.durationDays)
         } catch let e as RedeemError {
             lastError = e
         } catch {
@@ -418,5 +424,227 @@ struct RedeemCodeSection: View {
                 submitBackgroundDisabled: theme.overlay.opacity(0.18)
             )
         }
+    }
+}
+
+// MARK: - Full-screen celebration overlay
+//
+// On a successful redemption we float a borderless NSPanel above every
+// window of every space — confetti rains from the top, a hero card pops
+// in the dead center of the main display. The panel ignores mouse events
+// so it never blocks the user from continuing to interact with the
+// pairing popup (or anything else) underneath.
+//
+// Why NSPanel and not a SwiftUI `.fullScreenCover` modifier:
+//   - MioIsland is LSUIElement=true (no dock icon, menubar-only). A
+//     SwiftUI modifier would attach to a hosting NSWindow which we'd then
+//     have to size and place ourselves anyway. NSPanel + NSHostingView
+//     lets us go borderless + click-through in a few lines, and the panel
+//     can sit above arbitrary other app windows on the screen.
+//   - .canJoinAllSpaces lets the confetti follow the user if they redeem
+//     from a Space the main window isn't currently on.
+//   - .nonactivatingPanel ensures we don't steal focus from whatever the
+//     user is doing (text field, terminal, etc).
+
+@MainActor
+final class CelebrationOverlay {
+    static let shared = CelebrationOverlay()
+    private init() {}
+
+    private var panel: NSPanel?
+    private var dismissTask: Task<Void, Never>?
+
+    /// Total time the overlay stays on screen, including fade-out. Tuned
+    /// long enough to read the hero text without feeling like it lingers.
+    private let onScreenSeconds: Double = 3.2
+
+    func present(days: Int) {
+        // Cancel any in-flight celebration so a rapid second redeem replaces
+        // the previous one cleanly rather than overlapping or being canceled
+        // mid-flight by a late dismiss timer.
+        dismissTask?.cancel()
+        if let existing = panel {
+            existing.orderOut(nil)
+            panel = nil
+        }
+
+        let screen = NSScreen.main ?? NSScreen.screens.first
+        guard let frame = screen?.frame else { return }
+
+        let p = NSPanel(
+            contentRect: frame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        p.isOpaque = false
+        p.backgroundColor = .clear
+        p.hasShadow = false
+        // Sit one tick above the *highest* window level the OS exposes —
+        // `kCGMaximumWindowLevel` (which QRPairingWindow and PresetSettings
+        // use). `.screenSaver` (1000) was not enough: those windows are at
+        // ~2_147_483_631 and would visually cover the celebration. +1 makes
+        // sure the confetti never gets buried, regardless of what other
+        // app windows the user has up.
+        p.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.maximumWindow)) + 1)
+        p.ignoresMouseEvents = true
+        p.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
+        p.isReleasedWhenClosed = false
+        p.contentView = NSHostingView(rootView: FullScreenCelebration(days: days))
+        p.setFrame(frame, display: true)
+        p.orderFrontRegardless()
+
+        panel = p
+
+        dismissTask = Task { @MainActor [weak self] in
+            guard let seconds = self?.onScreenSeconds else { return }
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            self?.dismiss()
+        }
+    }
+
+    private func dismiss() {
+        guard let p = panel else { return }
+        // Fade the panel out via animator before tearing down, so it doesn't
+        // pop offscreen. NSPanel animator honors animationContext duration.
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.45
+            p.animator().alphaValue = 0
+        }, completionHandler: { [weak self] in
+            p.orderOut(nil)
+            self?.panel = nil
+        })
+    }
+}
+
+/// Hero center card + falling confetti, sized to fill an NSPanel set to
+/// the entire screen frame.
+private struct FullScreenCelebration: View {
+    let days: Int
+    private static let limeBrand = Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255)
+
+    var body: some View {
+        ZStack {
+            // No background fill — keeps the desktop visible behind the
+            // celebration so it feels like an overlay, not a takeover.
+            FullScreenConfettiShower()
+
+            VStack(spacing: 18) {
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 88, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Self.limeBrand, Self.limeBrand.opacity(0.75)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .shadow(color: Self.limeBrand.opacity(0.6), radius: 30)
+                    .symbolEffect(.bounce.up.byLayer, value: days)
+
+                Text(L10n.redeemSuccessTitle)
+                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.45), radius: 10, x: 0, y: 4)
+
+                Text(L10n.redeemSuccessDays(days))
+                    .font(.system(size: 26, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.92))
+                    .shadow(color: .black.opacity(0.45), radius: 6, x: 0, y: 2)
+            }
+            .padding(.horizontal, 60)
+            .padding(.vertical, 44)
+            .background(
+                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 32, style: .continuous)
+                            .strokeBorder(Self.limeBrand.opacity(0.7), lineWidth: 2)
+                    )
+                    .shadow(color: .black.opacity(0.35), radius: 40, x: 0, y: 16)
+            )
+            .scaleEffect(1.0)
+            .transition(.scale(scale: 0.5).combined(with: .opacity))
+        }
+    }
+}
+
+/// Full-display confetti shower. 80 pieces feel substantial without being
+/// noisy; geometry reader picks up the panel's actual size so each piece
+/// can fall the full screen height regardless of monitor resolution.
+private struct FullScreenConfettiShower: View {
+    private static let palette: [Color] = [
+        Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255), // brand lime
+        Color(red: 0xCA/255, green: 0xFF/255, blue: 0x00/255), // brand lime ×2 weight
+        Color(red: 1.00,    green: 0.85,    blue: 0.20),       // sunshine
+        Color(red: 1.00,    green: 0.45,    blue: 0.65),       // pink
+        Color(red: 0.40,    green: 0.75,    blue: 1.00),       // sky
+        Color(red: 1.00,    green: 0.55,    blue: 0.15),       // orange
+        Color(red: 0.55,    green: 0.85,    blue: 0.45),       // mint
+        Color(red: 0.65,    green: 0.45,    blue: 1.00),       // violet
+    ]
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                ForEach(0..<80, id: \.self) { i in
+                    FullScreenConfettiPiece(
+                        color: Self.palette[i % Self.palette.count],
+                        screenWidth: geo.size.width,
+                        screenHeight: geo.size.height,
+                        delay: Double(i) * 0.02
+                    )
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+private struct FullScreenConfettiPiece: View {
+    let color: Color
+    let screenWidth: CGFloat
+    let screenHeight: CGFloat
+    let delay: Double
+
+    @State private var animate = false
+    // Per-piece random params chosen once at init so SwiftUI's body
+    // recomposition can't re-roll them (which would cause the piece to
+    // teleport mid-fall).
+    private let startX: CGFloat
+    private let endXDrift: CGFloat
+    private let width: CGFloat
+    private let height: CGFloat
+    private let rotations: Double
+    private let duration: Double
+
+    init(color: Color, screenWidth: CGFloat, screenHeight: CGFloat, delay: Double) {
+        self.color = color
+        self.screenWidth = screenWidth
+        self.screenHeight = screenHeight
+        self.delay = delay
+        self.startX = .random(in: 0...screenWidth)
+        self.endXDrift = .random(in: -120...120)
+        self.width = .random(in: 8...14)
+        self.height = .random(in: 14...22)
+        self.rotations = .random(in: 2.0...5.0)
+        self.duration = .random(in: 2.6...3.4)
+    }
+
+    var body: some View {
+        Rectangle()
+            .fill(color)
+            .frame(width: width, height: height)
+            .position(
+                x: animate ? startX + endXDrift : startX,
+                y: animate ? screenHeight + 60 : -80
+            )
+            .rotationEffect(.degrees(animate ? 360.0 * rotations : 0))
+            .opacity(animate ? 0 : 1)
+            .onAppear {
+                withAnimation(.easeIn(duration: duration).delay(delay)) {
+                    animate = true
+                }
+            }
     }
 }
