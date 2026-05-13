@@ -1277,14 +1277,24 @@ private struct QuestionContentWrapper: View {
     let session: SessionState
     @ObservedObject var sessionMonitor: ClaudeSessionMonitor
     @ObservedObject var viewModel: NotchViewModel
+    /// Tool-use IDs the user explicitly dismissed via the AskUserQuestion
+    /// header X. Lets the user say "I'll deal with this later" without
+    /// sending Enter / ↓+Enter to the CLI (Submit / Cancel both commit a
+    /// real answer). A fresh question with a different toolUseId
+    /// re-pops the panel automatically — this isn't a permanent mute.
+    @State private var dismissedQuestionToolUseIds: Set<String> = []
 
     var body: some View {
         let liveSession = sessionMonitor.instances.first(where: { $0.sessionId == session.sessionId }) ?? session
-        if let ctx = Self.questionContext(for: liveSession) {
+        if let ctx = Self.questionContext(for: liveSession),
+           !dismissedQuestionToolUseIds.contains(ctx.toolUseId) {
             AskUserQuestionView(
                 session: liveSession,
                 context: ctx,
-                sessionMonitor: sessionMonitor
+                sessionMonitor: sessionMonitor,
+                onDismiss: {
+                    dismissedQuestionToolUseIds.insert(ctx.toolUseId)
+                }
             )
         } else {
             ClaudeInstancesView(

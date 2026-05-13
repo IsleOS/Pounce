@@ -12,6 +12,11 @@ struct AskUserQuestionView: View {
     let session: SessionState
     let context: QuestionContext
     @ObservedObject var sessionMonitor: ClaudeSessionMonitor
+    /// Called when the user taps the header X. Hides this view in the
+    /// parent (back to the regular instances list); does NOT send any
+    /// keystrokes to the CLI — the underlying Claude session keeps
+    /// waiting until the user answers via terminal or another device.
+    var onDismiss: (() -> Void)? = nil
     @ObservedObject private var notchStore: NotchCustomizationStore = .shared
     @State private var customTexts: [Int: String] = [:]  // per-question custom text
     @State private var hoveredKey: String? = nil
@@ -26,6 +31,17 @@ struct AskUserQuestionView: View {
                     .notchFont(11, weight: .semibold)
                     .notchSecondaryForeground()
                 Spacer()
+                if let onDismiss {
+                    Button(action: onDismiss) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(theme.secondaryText.opacity(0.5))
+                            .frame(width: 18, height: 18)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Hide this question — CLI still waits for your reply")
+                }
             }
             .padding(.horizontal, 12)
             .padding(.top, 8)
