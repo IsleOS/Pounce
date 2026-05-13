@@ -69,6 +69,43 @@ final class ServerConnection: ObservableObject {
         self.token = keyManager.loadToken(forServer: serverUrl)
     }
 
+    // MARK: - Client version gate (cross-platform contract)
+
+    /// Header value advertising this client's platform + semver. The
+    /// server uses it for Phase 1 observation (version distribution) and
+    /// Phase 2 enforcement (HTTP 426 on too-old clients).
+    ///
+    /// Pre-release suffixes are stripped (e.g. "2.4.0-tf1" -> "mac/2.4.0")
+    /// so TestFlight / debug builds aren't accidentally classified as
+    /// older than their underlying release version.
+    static let clientVersionHeaderValue: String = {
+        let raw = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
+        let base = raw.split(separator: "-").first.map(String.init) ?? raw
+        return "mac/\(base)"
+    }()
+
+    /// Apply the `X-Client-Version` header to every outbound URLRequest.
+    /// Called from a single helper so we can't forget on new endpoints.
+    private func addClientHeaders(to request: inout URLRequest) {
+        request.setValue(Self.clientVersionHeaderValue, forHTTPHeaderField: "X-Client-Version")
+    }
+
+    /// Intercept HTTP 426 client_too_old before any endpoint-specific
+    /// body parsing. The alert pops once per cooldown window (handled by
+    /// UpgradeRequiredCoordinator), then RedeemError.clientTooOld is
+    /// thrown so callers stop their flow (no retry, no body parse, no
+    /// fallback path). Non-426 responses pass through untouched.
+    private func check426(_ data: Data, _ response: URLResponse) throws {
+        guard let http = response as? HTTPURLResponse, http.statusCode == 426 else { return }
+        let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        guard (json?["error"] as? String) == "client_too_old" else { return }
+        let downloadUrl = (json?["downloadUrl"] as? String) ?? "https://miomioos.github.io/MioIsland/"
+        let message = json?["message"] as? String
+        UpgradeRequiredCoordinator.shared.show(downloadUrl: downloadUrl, serverMessage: message)
+        Self.logger.warning("Server returned 426 client_too_old — clientVersion=\(Self.clientVersionHeaderValue, privacy: .public)")
+        throw RedeemError.clientTooOld
+    }
+
     // MARK: - Authentication
 
     func authenticate() async throws {
@@ -91,9 +128,12 @@ final class ServerConnection: ObservableObject {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        addClientHeaders(to: &urlRequest)
         urlRequest.httpBody = try JSONEncoder().encode(request)
 
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
+
+        try check426(data, response)
 
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             state = .error("Auth failed")
@@ -135,7 +175,10 @@ final class ServerConnection: ObservableObject {
             .reconnectWaitMax(30),
             .randomizationFactor(0.5),
             .forceWebsockets(true),
-            .extraHeaders(["Authorization": "Bearer \(token)"]),
+            .extraHeaders([
+                "Authorization": "Bearer \(token)",
+                "X-Client-Version": Self.clientVersionHeaderValue,
+            ]),
         ])
 
         socket = manager?.defaultSocket
@@ -288,8 +331,10 @@ final class ServerConnection: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        addClientHeaders(to: &request)
         request.httpBody = data
-        _ = try? await URLSession.shared.data(for: request)
+        guard let (respData, resp) = try? await URLSession.shared.data(for: request) else { return }
+        try? check426(respData, resp)
     }
 
     /// Download a blob by ID. Returns (data, mime) or throws.
@@ -297,7 +342,9 @@ final class ServerConnection: ObservableObject {
         guard let token else { throw URLError(.userAuthenticationRequired) }
         var request = URLRequest(url: URL(string: "\(serverUrl)/v1/blobs/\(blobId)")!)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        addClientHeaders(to: &request)
         let (data, response) = try await URLSession.shared.data(for: request)
+        try check426(data, response)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
             throw NSError(domain: "CodeIsland.Blob", code: (response as? HTTPURLResponse)?.statusCode ?? -1,
                           userInfo: [NSLocalizedDescriptionKey: "Blob download failed"])
@@ -337,9 +384,11 @@ final class ServerConnection: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        addClientHeaders(to: &request)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try check426(data, response)
         return try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
     }
 
@@ -349,15 +398,19 @@ final class ServerConnection: ObservableObject {
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        addClientHeaders(to: &request)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        _ = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try check426(data, response)
     }
 
     private func getJSON(path: String) async throws -> [String: Any] {
         let url = URL(string: "\(serverUrl)\(path)")!
         var request = URLRequest(url: url)
         if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
-        let (data, _) = try await URLSession.shared.data(for: request)
+        addClientHeaders(to: &request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try check426(data, response)
         return try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
     }
 
@@ -366,7 +419,9 @@ final class ServerConnection: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
         if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
-        let (_, response) = try await URLSession.shared.data(for: request)
+        addClientHeaders(to: &request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try check426(data, response)
         if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
             throw URLError(.badServerResponse)
         }
@@ -424,7 +479,9 @@ final class ServerConnection: ObservableObject {
             let url = URL(string: "\(serverUrl)/v1/pairing/links")!
             var request = URLRequest(url: url)
             if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
-            let (data, _) = try await URLSession.shared.data(for: request)
+            addClientHeaders(to: &request)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            try check426(data, response)
             guard let array = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
             return array.compactMap { dict in
                 guard let id = dict["deviceId"] as? String,
@@ -475,16 +532,20 @@ final class ServerConnection: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        addClientHeaders(to: &request)
         request.httpBody = try JSONSerialization.data(withJSONObject: ["code": code])
         request.timeoutInterval = 15
 
         let data: Data
+        let response: URLResponse
         do {
-            (data, _) = try await URLSession.shared.data(for: request)
+            (data, response) = try await URLSession.shared.data(for: request)
         } catch {
             Self.logger.error("redeemPairingCode network error: \(error.localizedDescription)")
             throw RedeemError.network
         }
+
+        try check426(data, response)
 
         let body = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
 
@@ -533,15 +594,19 @@ final class ServerConnection: ObservableObject {
         }
         var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        addClientHeaders(to: &request)
         request.timeoutInterval = 10
 
         let data: Data
+        let response: URLResponse
         do {
-            (data, _) = try await URLSession.shared.data(for: request)
+            (data, response) = try await URLSession.shared.data(for: request)
         } catch {
             Self.logger.error("fetchSubscription network error: \(error.localizedDescription)")
             throw RedeemError.network
         }
+
+        try check426(data, response)
 
         guard let body = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
             Self.logger.warning("fetchSubscription: non-JSON response, ignoring")

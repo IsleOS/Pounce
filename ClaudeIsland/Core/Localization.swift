@@ -387,6 +387,25 @@ enum L10n {
         tr("Network error. Check your connection and try again.",
            "网络错误,请检查网络后重试。")
     }
+    static var redeemErrorClientTooOld: String {
+        tr("This version is too old. Please update to continue.",
+           "当前版本过旧,请升级后继续使用。")
+    }
+
+    // MARK: - Upgrade-required alert (HTTP 426 client_too_old)
+
+    static var upgradeRequiredTitle: String {
+        tr("MioIsland update required", "需要升级 MioIsland")
+    }
+    /// Used only when the server response is missing a `message` field.
+    /// Normally the server-sent message wins so admins can change copy
+    /// (e.g. mention v2.5.0) without shipping a new Mac build.
+    static var upgradeRequiredFallbackMessage: String {
+        tr("The server requires MioIsland v2.4.0 or newer to continue.",
+           "服务器端要求 MioIsland v2.4.0 或更新版本才能继续使用。")
+    }
+    static var upgradeNow: String { tr("Update Now", "立即升级") }
+    static var upgradeLater: String { tr("Later", "稍后") }
     static var launchPresetsSection: String { tr("Launch Presets", "启动预设") }
     static var addPreset: String { tr("New Preset", "新建预设") }
     static var noPresets: String { tr("No presets yet — tap + to add one", "还没有预设，点击 + 添加") }

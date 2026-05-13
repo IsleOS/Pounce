@@ -65,6 +65,11 @@ enum RedeemError: Error, Equatable {
     case serverError
     case network
     case malformedResponse
+    /// HTTP 426 + `{"error":"client_too_old"}`. Surfaced from the version
+    /// gate middleware once Phase 2 enforcement is on. The user-facing
+    /// alert is shown by `UpgradeRequiredCoordinator`; this case is
+    /// thrown so callers stop their flow (skip retry, skip body parse).
+    case clientTooOld
 
     /// Build from the server's machine-readable `error` field. Unknown
     /// values fall back to .serverError so we still surface *some*
@@ -99,6 +104,7 @@ enum RedeemError: Error, Equatable {
         case .serverError:       return L10n.redeemErrorServerError
         case .network:           return L10n.redeemErrorNetwork
         case .malformedResponse: return L10n.redeemErrorServerError
+        case .clientTooOld:      return L10n.redeemErrorClientTooOld
         }
     }
 }

@@ -119,3 +119,59 @@ extension UpdaterManager: SPUUpdaterDelegate {
         }
     }
 }
+
+// MARK: - UpgradeRequiredCoordinator (HTTP 426 client_too_old)
+
+/// Triggered when a server endpoint returns HTTP 426 with
+/// `{"error":"client_too_old"}`. Per the cross-platform contract:
+/// - The alert MUST re-pop on every blocked API call (no "dismissed"
+///   memory) so old clients can't silently bypass the gate.
+/// - But multiple concurrent 426s within a short window (socket +
+///   redeem + capabilities firing together at launch) would stack
+///   alerts on screen. A 5s cooldown gates the *display*, not the
+///   policy — the next API call after cooldown will pop it again.
+///
+/// Keeping it as a tiny @MainActor singleton avoids leaking alert state
+/// into ServerConnection.
+@MainActor
+final class UpgradeRequiredCoordinator {
+    static let shared = UpgradeRequiredCoordinator()
+    private init() {}
+
+    private var lastShownAt: Date?
+    private let cooldown: TimeInterval = 5
+
+    func show(downloadUrl: String, serverMessage: String?) {
+        let now = Date()
+        if let last = lastShownAt, now.timeIntervalSince(last) < cooldown { return }
+        lastShownAt = now
+
+        let alert = NSAlert()
+        alert.messageText = L10n.upgradeRequiredTitle
+        alert.informativeText = (serverMessage?.isEmpty == false)
+            ? (serverMessage ?? L10n.upgradeRequiredFallbackMessage)
+            : L10n.upgradeRequiredFallbackMessage
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: L10n.upgradeNow)
+        alert.addButton(withTitle: L10n.upgradeLater)
+
+        NSApp.activate(ignoringOtherApps: true)
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            // Open the server-supplied URL rather than triggering
+            // Sparkle's checkForUpdates() because forced upgrade is the
+            // server's authoritative "this client is too old" signal;
+            // Sparkle would consult its own appcast and may disagree
+            // (e.g. say "you're current") if the appcast hasn't caught
+            // up to the server's gate. The canonical download page is
+            // the safe source of truth for this path.
+            if let url = URL(string: downloadUrl) {
+                NSWorkspace.shared.open(url)
+            }
+        }
+        // "Later" intentionally does nothing — server will re-trigger
+        // this on the user's next API call (cooldown above just prevents
+        // a stack of alerts in the same 5s window).
+    }
+}
